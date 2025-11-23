@@ -159,6 +159,11 @@
   white-space: pre-line;
 }
 
+/* Hide response text during animation */
+.message-text.response-hidden {
+  color: transparent;
+}
+
 /* Token Styling */
 .token {
   position: relative;
@@ -177,6 +182,26 @@
 .ghost-token {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.7;
+}
+
+/* Ghost surrounding text (initially hidden, then revealed) */
+.ghost-surrounding {
+  color: transparent;
+  transition: color 1.5s ease-out;
+}
+
+/* When surrounding text should be visible */
+.ghost-token.surrounding-visible .ghost-surrounding {
+  color: #ececf1;
+}
+
+/* The highlighted token in the expanded ghost */
+.ghost-token-highlight {
+  color: #10a37f;
+  font-weight: 600;
+  background-color: rgba(16, 163, 127, 0.15);
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 /* Footer */

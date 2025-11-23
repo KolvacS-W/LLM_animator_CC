@@ -19,9 +19,10 @@ function App() {
 
   // Animation state
   const [isAnimating, setIsAnimating] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState("idle"); // idle, highlight, move, reveal
+  const [animationPhase, setAnimationPhase] = useState("idle"); // idle, highlight, move, reveal, expand
   const [ghostStyle, setGhostStyle] = useState({});
-  const [ghostText, setGhostText] = useState("");
+  const [ghostContent, setGhostContent] = useState(null); // Can be string or React element
+  const [surroundingTextVisible, setSurroundingTextVisible] = useState(false);
 
   // Refs for DOM elements
   const promptTokenRef = useRef(null);
@@ -85,7 +86,7 @@ function App() {
       const availableWidth = containerRect.right - promptRect.left;
 
       // Set initial ghost position (at prompt token)
-      setGhostText(promptToken);
+      setGhostContent(promptToken);
       setGhostStyle({
         position: "fixed",
         left: promptRect.left,
@@ -134,7 +135,7 @@ function App() {
         // Phase 3: Transform to response token (morph in place, no repositioning)
         setTimeout(() => {
           setAnimationPhase("reveal");
-          setGhostText(responseToken);
+          setGhostContent(responseToken);
           // Keep the same translated position, just fade in the new text
           // maxWidth is already set correctly from Phase 2
           setGhostStyle((prev) => ({
@@ -144,17 +145,67 @@ function App() {
             transition: "opacity 0.4s ease-out, color 0.4s ease-out",
           }));
 
-          // Phase 4: Hold briefly then clean up
+          // Phase 4: Hold briefly before expanding
           setTimeout(() => {
-            setIsAnimating(false);
-            setAnimationPhase("idle");
-            setGhostStyle({});
-            setGhostText("");
+            // Phase 5: Expand to full response text
+            setAnimationPhase("expand");
+            setSurroundingTextVisible(false); // Start with surrounding text hidden
+
+            // Get the response container position for proper positioning
+            const expandContainerRect =
+              responseContainerRef.current.getBoundingClientRect();
+
+            // Create the full response with token highlighted and rest hidden
+            const tokenIndex = responseText.indexOf(responseToken);
+            const beforeToken = responseText.slice(0, tokenIndex);
+            const afterToken = responseText.slice(tokenIndex + responseToken.length);
+
+            setGhostContent(
+              <>
+                <span className="ghost-surrounding">{beforeToken}</span>
+                <span className="ghost-token-highlight">{responseToken}</span>
+                <span className="ghost-surrounding">{afterToken}</span>
+              </>
+            );
+
+            // Position at the start of the response container
+            setGhostStyle({
+              position: "fixed",
+              left: expandContainerRect.left,
+              top: expandContainerRect.top,
+              width: expandContainerRect.width,
+              fontSize: window.getComputedStyle(responseTokenRef.current).fontSize,
+              fontWeight: "normal",
+              color: "#ececf1",
+              opacity: 1,
+              transform: "none",
+              transition: "none",
+              pointerEvents: "none",
+              zIndex: 1000,
+              backgroundColor: "transparent",
+              padding: "0",
+              borderRadius: "0",
+              lineHeight: "1.7",
+            });
+
+            // Phase 5b: Gradually reveal surrounding text
+            setTimeout(() => {
+              setSurroundingTextVisible(true);
+            }, 100);
+
+            // Phase 6: Clean up after reveal completes
+            setTimeout(() => {
+              setIsAnimating(false);
+              setAnimationPhase("idle");
+              setGhostStyle({});
+              setGhostContent(null);
+              setSurroundingTextVisible(false);
+            }, 2500);
           }, 800);
         }, 1200);
       }, 100);
     }, 500);
-  }, [isAnimating, promptToken, responseToken]);
+  }, [isAnimating, promptToken, responseToken, responseText]);
 
   // Determine which tokens should be highlighted based on animation phase
   const isPromptHighlighted =
@@ -220,7 +271,10 @@ function App() {
         <div className="message assistant-message">
           <div className="avatar assistant-avatar">A</div>
           <div className="message-content">
-            <div className="message-text" ref={responseContainerRef}>
+            <div
+              className={`message-text ${isAnimating ? "response-hidden" : ""}`}
+              ref={responseContainerRef}
+            >
               {wrapTokenInText(
                 responseText,
                 responseToken,
@@ -233,9 +287,13 @@ function App() {
       </div>
 
       {/* Ghost element for animation */}
-      {ghostText && (
-        <div ref={ghostRef} className="ghost-token" style={ghostStyle}>
-          {ghostText}
+      {ghostContent && (
+        <div
+          ref={ghostRef}
+          className={`ghost-token ${surroundingTextVisible ? "surrounding-visible" : ""}`}
+          style={ghostStyle}
+        >
+          {ghostContent}
         </div>
       )}
 
