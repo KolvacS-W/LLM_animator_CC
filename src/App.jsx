@@ -119,45 +119,24 @@ function App() {
         setGhostStyle((prev) => ({
           ...prev,
           transform: `translate(${deltaX}px, ${deltaY}px) scale(1)`,
-          opacity: 0,
+          opacity: 1,
           color: "transparent",
           transition:
             "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s ease-in-out, color 1.2s ease-in-out",
         }));
 
-        // Phase 3: Transform to response token
+        // Phase 3: Transform to response token (morph in place, no repositioning)
         setTimeout(() => {
-          // Recalculate response position again to ensure accuracy after movement
-          const finalResponseRect =
-            responseTokenRef.current.getBoundingClientRect();
-          // Calculate available width from response token position to container edge
-          const finalContainerRect =
-            responseContainerRef.current.getBoundingClientRect();
-          const finalAvailableWidth =
-            finalContainerRect.right - finalResponseRect.left;
-
           setAnimationPhase("reveal");
           setGhostText(responseToken);
-          // Set position directly to response token location (not using transform delta)
-          setGhostStyle({
-            position: "fixed",
-            left: finalResponseRect.left,
-            top: finalResponseRect.top,
-            maxWidth: finalAvailableWidth,
-            fontSize: window.getComputedStyle(responseTokenRef.current)
-              .fontSize,
-            fontWeight: "600",
+          // Keep the same translated position, just fade in the new text
+          setGhostStyle((prev) => ({
+            ...prev,
             color: "#10a37f",
             opacity: 1,
-            transform: "scale(1.1)",
             transition:
-              "opacity 0.4s ease-out, color 0.4s ease-out, transform 0.4s ease-out",
-            pointerEvents: "none",
-            zIndex: 1000,
-            backgroundColor: "rgba(16, 163, 127, 0.15)",
-            padding: "2px 4px",
-            borderRadius: "4px",
-          });
+              "opacity 0.4s ease-out, color 0.4s ease-out",
+          }));
 
           // Phase 4: Scale back and finish
           setTimeout(() => {
