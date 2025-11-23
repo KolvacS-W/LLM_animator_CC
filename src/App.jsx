@@ -134,26 +134,16 @@ function App() {
             ...prev,
             color: "#10a37f",
             opacity: 1,
-            transition:
-              "opacity 0.4s ease-out, color 0.4s ease-out",
+            transition: "opacity 0.4s ease-out, color 0.4s ease-out",
           }));
 
-          // Phase 4: Scale back and finish
+          // Phase 4: Hold briefly then clean up
           setTimeout(() => {
-            setGhostStyle((prev) => ({
-              ...prev,
-              transform: "scale(1)",
-              transition: "transform 0.3s ease-out",
-            }));
-
-            // Clean up
-            setTimeout(() => {
-              setIsAnimating(false);
-              setAnimationPhase("idle");
-              setGhostStyle({});
-              setGhostText("");
-            }, 500);
-          }, 400);
+            setIsAnimating(false);
+            setAnimationPhase("idle");
+            setGhostStyle({});
+            setGhostText("");
+          }, 800);
         }, 1200);
       }, 100);
     }, 500);
