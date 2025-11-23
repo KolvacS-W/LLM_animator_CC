@@ -233,7 +233,8 @@ function App() {
   // Determine which tokens should be highlighted based on animation phase
   const isPromptHighlighted =
     animationPhase === "highlight" || animationPhase === "move";
-  const isResponseHighlighted = animationPhase === "reveal";
+  // const isResponseHighlighted = animationPhase === "reveal";
+  const isResponseHighlighted = false;
 
   return (
     <div className="app">
