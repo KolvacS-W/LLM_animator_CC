@@ -113,16 +113,22 @@ function App() {
           promptTokenRef.current.getBoundingClientRect();
         const currentResponseRect =
           responseTokenRef.current.getBoundingClientRect();
+        const currentContainerRect =
+          responseContainerRef.current.getBoundingClientRect();
         const deltaX = currentResponseRect.left - currentPromptRect.left;
         const deltaY = currentResponseRect.top - currentPromptRect.top;
+        // Calculate the maxWidth for response area (from response token position to container edge)
+        const responseMaxWidth =
+          currentContainerRect.right - currentResponseRect.left;
 
         setGhostStyle((prev) => ({
           ...prev,
           transform: `translate(${deltaX}px, ${deltaY}px) scale(1)`,
+          maxWidth: responseMaxWidth,
           opacity: 1,
           color: "transparent",
           transition:
-            "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s ease-in-out, color 1.2s ease-in-out",
+            "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s ease-in-out, color 1.2s ease-in-out, max-width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
         }));
 
         // Phase 3: Transform to response token (morph in place, no repositioning)
@@ -130,6 +136,7 @@ function App() {
           setAnimationPhase("reveal");
           setGhostText(responseToken);
           // Keep the same translated position, just fade in the new text
+          // maxWidth is already set correctly from Phase 2
           setGhostStyle((prev) => ({
             ...prev,
             color: "#10a37f",
