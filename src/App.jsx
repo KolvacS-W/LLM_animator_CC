@@ -7,7 +7,7 @@ const CONFIG = {
     "what are the good things to ask to get to know a girl when you go on a second date?",
   response: `A second date is usually when you move from first-impression chemistry to genuine connection — so your questions should feel curious, personal, and emotionally open, but not like an interrogation. Here are some great directions and examples:`,
   promptToken: "good things to ask",
-  responseToken: "curious, personal, and emotionally open",
+  responseToken: "genuine connection — so your questions should feel",
 };
 
 function App() {
@@ -145,62 +145,85 @@ function App() {
             transition: "opacity 0.4s ease-out, color 0.4s ease-out",
           }));
 
-          // Phase 4: Hold briefly before expanding
+          // Phase 4: Hold briefly, then fade out before expansion
           setTimeout(() => {
-            // Phase 5: Expand to full response text
-            setAnimationPhase("expand");
-            setSurroundingTextVisible(false); // Start with surrounding text hidden
+            // Step 1: Fade out the current ghost (responseToken only)
+            setGhostStyle((prev) => ({
+              ...prev,
+              opacity: 0,
+              transition: "opacity 0.3s ease-out",
+            }));
 
-            // Get the response container position for proper positioning
-            const expandContainerRect =
-              responseContainerRef.current.getBoundingClientRect();
-
-            // Create the full response with token highlighted and rest hidden
-            const tokenIndex = responseText.indexOf(responseToken);
-            const beforeToken = responseText.slice(0, tokenIndex);
-            const afterToken = responseText.slice(tokenIndex + responseToken.length);
-
-            setGhostContent(
-              <>
-                <span className="ghost-surrounding">{beforeToken}</span>
-                <span className="ghost-token-highlight">{responseToken}</span>
-                <span className="ghost-surrounding">{afterToken}</span>
-              </>
-            );
-
-            // Position at the start of the response container
-            setGhostStyle({
-              position: "fixed",
-              left: expandContainerRect.left,
-              top: expandContainerRect.top,
-              width: expandContainerRect.width,
-              fontSize: window.getComputedStyle(responseTokenRef.current).fontSize,
-              fontWeight: "normal",
-              color: "#ececf1",
-              opacity: 1,
-              transform: "none",
-              transition: "none",
-              pointerEvents: "none",
-              zIndex: 1000,
-              backgroundColor: "transparent",
-              padding: "0",
-              borderRadius: "0",
-              lineHeight: "1.7",
-            });
-
-            // Phase 5b: Gradually reveal surrounding text
+            // Step 2: After fade out completes, switch to full text content
             setTimeout(() => {
-              setSurroundingTextVisible(true);
-            }, 100);
-
-            // Phase 6: Clean up after reveal completes
-            setTimeout(() => {
-              setIsAnimating(false);
-              setAnimationPhase("idle");
-              setGhostStyle({});
-              setGhostContent(null);
+              setAnimationPhase("expand");
               setSurroundingTextVisible(false);
-            }, 2500);
+
+              // Get positions for the transition
+              const expandContainerRect =
+                responseContainerRef.current.getBoundingClientRect();
+
+              // Create the full response with token highlighted and rest hidden
+              const tokenIndex = responseText.indexOf(responseToken);
+              const beforeToken = responseText.slice(0, tokenIndex);
+              const afterToken = responseText.slice(
+                tokenIndex + responseToken.length
+              );
+
+              // Update content to full text
+              setGhostContent(
+                <>
+                  <span className="ghost-surrounding">{beforeToken}</span>
+                  <span className="ghost-token-highlight">{responseToken}</span>
+                  <span className="ghost-surrounding">{afterToken}</span>
+                </>
+              );
+
+              // Position ghost at the container location, initially invisible
+              setGhostStyle({
+                position: "fixed",
+                left: expandContainerRect.left,
+                top: expandContainerRect.top,
+                width: expandContainerRect.width,
+                maxWidth: expandContainerRect.width,
+                fontSize: window.getComputedStyle(responseTokenRef.current)
+                  .fontSize,
+                fontWeight: "normal",
+                color: "#ececf1",
+                opacity: 0,
+                transform: "none",
+                transition: "none",
+                pointerEvents: "none",
+                zIndex: 1000,
+                backgroundColor: "transparent",
+                padding: "0",
+                borderRadius: "0",
+                lineHeight: "1.7",
+              });
+
+              // Step 3: Fade in the new content
+              setTimeout(() => {
+                setGhostStyle((prev) => ({
+                  ...prev,
+                  opacity: 1,
+                  transition: "opacity 0.4s ease-out",
+                }));
+
+                // Step 4: Start revealing surrounding text after fade in starts
+                setTimeout(() => {
+                  setSurroundingTextVisible(true);
+                }, 200);
+              }, 50);
+
+              // Phase 6: Clean up after reveal completes
+              setTimeout(() => {
+                setIsAnimating(false);
+                setAnimationPhase("idle");
+                setGhostStyle({});
+                setGhostContent(null);
+                setSurroundingTextVisible(false);
+              }, 2500);
+            }, 350); // Wait for fade out to complete
           }, 800);
         }, 1200);
       }, 100);
@@ -290,7 +313,9 @@ function App() {
       {ghostContent && (
         <div
           ref={ghostRef}
-          className={`ghost-token ${surroundingTextVisible ? "surrounding-visible" : ""}`}
+          className={`ghost-token ${
+            surroundingTextVisible ? "surrounding-visible" : ""
+          }`}
           style={ghostStyle}
         >
           {ghostContent}
