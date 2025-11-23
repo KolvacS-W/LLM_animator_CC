@@ -149,13 +149,14 @@
 .message-content {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .message-text {
   font-size: 1rem;
   line-height: 1.7;
   color: #ececf1;
+  white-space: pre-line;
 }
 
 /* Token Styling */

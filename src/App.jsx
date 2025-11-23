@@ -3,8 +3,17 @@ import './App.css'
 
 // Configuration: Define prompt and response content with tokens
 const CONFIG = {
-  prompt: "Tell me a story about a rabbit running through the forest.",
-  response: "On a moonless night, a fox darted through the forest, heart pounding.",
+  prompt: "give me a very short horror story about a fox and a rabbit, within 10 sentences",
+  response: `On a moonless night, a rabbit darted through the forest, heart pounding.
+Behind it, a fox padded silently, its eyes glowing faintly red.
+The rabbit thought it had found safety in an old burrow, but the fox never stopped smiling.
+Inside the tunnel, the rabbit froze—the walls were lined with tiny, gnawed bones.
+The fox's breath filled the air before its body did.
+The rabbit screamed, but no sound came out.
+The fox whispered, "I've been here before."
+Then the darkness swallowed the rabbit whole.
+Only silence remained in the forest.
+And the fox waited, patient, for the next one.`,
   promptToken: "rabbit",
   responseToken: "fox"
 }
