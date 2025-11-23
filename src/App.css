@@ -180,22 +180,63 @@
 
 /* Ghost Token */
 .ghost-token {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
   line-height: 1.7;
 }
 
-/* Ghost surrounding text (initially hidden, then revealed) */
+/* Ghost surrounding text - collapsed state (font-size 0) */
 .ghost-surrounding {
+  display: inline;
+  /* DEBUG: changed from transparent to visible */
   color: transparent;
-  transition: color 1.5s ease-out;
+  transition: font-size 1.2s cubic-bezier(0.4, 0, 0.2, 1), color 1.5s ease-out;
 }
 
-/* When surrounding text should be visible */
+.ghost-surrounding-collapsed {
+  font-size: 0;
+}
+
+/* Ghost surrounding text - expanded state (normal size, still transparent) */
+.ghost-surrounding-expanded {
+  font-size: inherit;
+  /* DEBUG: changed from transparent to visible */
+  color: transparent;
+}
+
+/* Ghost surrounding text - visible state (normal size, visible) */
+.ghost-surrounding-visible {
+  font-size: inherit;
+  color: #ececf1;
+}
+
+/* Legacy class for backward compatibility */
 .ghost-token.surrounding-visible .ghost-surrounding {
   color: #ececf1;
 }
 
-/* The highlighted token in the expanded ghost */
+/* The main token in the ghost (promptToken or responseToken) */
+.ghost-main-token {
+  color: #10a37f;
+  font-weight: 600;
+  background-color: rgba(16, 163, 127, 0.15);
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.4s ease-out, opacity 0.4s ease-out;
+}
+
+/* Token fading during morph */
+.ghost-main-token-fading {
+  /* DEBUG: changed from transparent to visible */
+  color: #10a37f;
+}
+
+/* Token visible after morph */
+.ghost-main-token-visible {
+  color: #10a37f;
+}
+
+/* Legacy highlighted token class */
 .ghost-token-highlight {
   color: #10a37f;
   font-weight: 600;

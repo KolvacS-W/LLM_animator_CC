@@ -66,7 +66,12 @@ function App() {
     setIsAnimating(true);
     setAnimationPhase("highlight");
 
-    // Phase 1: Highlight the prompt token
+    // Prepare the full text structure
+    const tokenIndex = responseText.indexOf(responseToken);
+    const beforeToken = responseText.slice(0, tokenIndex);
+    const afterToken = responseText.slice(tokenIndex + responseToken.length);
+
+    // Phase 1: Show ghost with full structure (surrounding text at font-size 0)
     setTimeout(() => {
       if (
         !promptTokenRef.current ||
@@ -78,152 +83,120 @@ function App() {
         return;
       }
 
-      // Get initial positions
+      // Get positions
       const promptRect = promptTokenRef.current.getBoundingClientRect();
-      // Calculate available width from token position to container edge (for text wrapping)
       const containerRect =
         responseContainerRef.current.getBoundingClientRect();
-      const availableWidth = containerRect.right - promptRect.left;
 
-      // Set initial ghost position (at prompt token)
-      setGhostContent(promptToken);
+      // Create ghost with full structure - surrounding text starts at font-size 0
+      setGhostContent(
+        <>
+          <span className="ghost-surrounding ghost-surrounding-collapsed">
+            {beforeToken}
+          </span>
+          <span className="ghost-main-token">{promptToken}</span>
+          <span className="ghost-surrounding ghost-surrounding-collapsed">
+            {afterToken}
+          </span>
+        </>
+      );
+
       setGhostStyle({
         position: "fixed",
         left: promptRect.left,
         top: promptRect.top,
-        maxWidth: availableWidth,
+        width: containerRect.width,
+        maxWidth: containerRect.width,
         fontSize: window.getComputedStyle(promptTokenRef.current).fontSize,
-        fontWeight: "600",
-        color: "#10a37f",
+        fontWeight: "normal",
+        color: "#ececf1",
         opacity: 1,
-        transform: "scale(1)",
+        transform: "none",
         transition: "none",
         pointerEvents: "none",
         zIndex: 1000,
-        backgroundColor: "rgba(16, 163, 127, 0.15)",
-        padding: "2px 4px",
-        borderRadius: "4px",
+        backgroundColor: "transparent",
+        padding: "0",
+        borderRadius: "0",
+        lineHeight: "1.7",
       });
 
       setAnimationPhase("move");
 
-      // Phase 2: Move to response position with fade
+      // Phase 2: Move to response container position + expand surrounding text
       setTimeout(() => {
-        // Recalculate positions fresh to account for any text reflow/wrapping
-        const currentPromptRect =
-          promptTokenRef.current.getBoundingClientRect();
-        const currentResponseRect =
-          responseTokenRef.current.getBoundingClientRect();
-        const currentContainerRect =
+        const expandContainerRect =
           responseContainerRef.current.getBoundingClientRect();
-        const deltaX = currentResponseRect.left - currentPromptRect.left;
-        const deltaY = currentResponseRect.top - currentPromptRect.top;
-        // Calculate the maxWidth for response area (from response token position to container edge)
-        const responseMaxWidth =
-          currentContainerRect.right - currentResponseRect.left;
+
+        // Update ghost to expand surrounding text and move to container position
+        setGhostContent(
+          <>
+            <span className="ghost-surrounding ghost-surrounding-expanded">
+              {beforeToken}
+            </span>
+            <span className="ghost-main-token ghost-main-token-fading">
+              {promptToken}
+            </span>
+            <span className="ghost-surrounding ghost-surrounding-expanded">
+              {afterToken}
+            </span>
+          </>
+        );
 
         setGhostStyle((prev) => ({
           ...prev,
-          transform: `translate(${deltaX}px, ${deltaY}px) scale(1)`,
-          maxWidth: responseMaxWidth,
-          opacity: 1,
-          color: "transparent",
+          left: expandContainerRect.left,
+          top: expandContainerRect.top,
           transition:
-            "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s ease-in-out, color 1.2s ease-in-out, max-width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            "left 1.2s cubic-bezier(0.4, 0, 0.2, 1), top 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
         }));
 
-        // Phase 3: Transform to response token (morph in place, no repositioning)
+        // Phase 3: Morph promptToken to responseToken
         setTimeout(() => {
           setAnimationPhase("reveal");
-          setGhostContent(responseToken);
-          // Keep the same translated position, just fade in the new text
-          // maxWidth is already set correctly from Phase 2
-          setGhostStyle((prev) => ({
-            ...prev,
-            color: "#10a37f",
-            opacity: 1,
-            transition: "opacity 0.4s ease-out, color 0.4s ease-out",
-          }));
 
-          // Phase 4: Hold briefly, then fade out before expansion
+          // Replace promptToken with responseToken (now visible)
+          setGhostContent(
+            <>
+              <span className="ghost-surrounding ghost-surrounding-expanded">
+                {beforeToken}
+              </span>
+              <span className="ghost-main-token ghost-main-token-visible">
+                {responseToken}
+              </span>
+              <span className="ghost-surrounding ghost-surrounding-expanded">
+                {afterToken}
+              </span>
+            </>
+          );
+
+          // Phase 4: Hold, then reveal surrounding text
           setTimeout(() => {
-            // Step 1: Fade out the current ghost (responseToken only)
-            setGhostStyle((prev) => ({
-              ...prev,
-              opacity: 0,
-              transition: "opacity 0.3s ease-out",
-            }));
+            setAnimationPhase("expand");
 
-            // Step 2: After fade out completes, switch to full text content
+            // Reveal surrounding text
+            setGhostContent(
+              <>
+                <span className="ghost-surrounding ghost-surrounding-visible">
+                  {beforeToken}
+                </span>
+                <span className="ghost-main-token ghost-main-token-visible">
+                  {responseToken}
+                </span>
+                <span className="ghost-surrounding ghost-surrounding-visible">
+                  {afterToken}
+                </span>
+              </>
+            );
+
+            // Phase 5: Clean up after reveal completes
             setTimeout(() => {
-              setAnimationPhase("expand");
+              setIsAnimating(false);
+              setAnimationPhase("idle");
+              setGhostStyle({});
+              setGhostContent(null);
               setSurroundingTextVisible(false);
-
-              // Get positions for the transition
-              const expandContainerRect =
-                responseContainerRef.current.getBoundingClientRect();
-
-              // Create the full response with token highlighted and rest hidden
-              const tokenIndex = responseText.indexOf(responseToken);
-              const beforeToken = responseText.slice(0, tokenIndex);
-              const afterToken = responseText.slice(
-                tokenIndex + responseToken.length
-              );
-
-              // Update content to full text
-              setGhostContent(
-                <>
-                  <span className="ghost-surrounding">{beforeToken}</span>
-                  <span className="ghost-token-highlight">{responseToken}</span>
-                  <span className="ghost-surrounding">{afterToken}</span>
-                </>
-              );
-
-              // Position ghost at the container location, initially invisible
-              setGhostStyle({
-                position: "fixed",
-                left: expandContainerRect.left,
-                top: expandContainerRect.top,
-                width: expandContainerRect.width,
-                maxWidth: expandContainerRect.width,
-                fontSize: window.getComputedStyle(responseTokenRef.current)
-                  .fontSize,
-                fontWeight: "normal",
-                color: "#ececf1",
-                opacity: 0,
-                transform: "none",
-                transition: "none",
-                pointerEvents: "none",
-                zIndex: 1000,
-                backgroundColor: "transparent",
-                padding: "0",
-                borderRadius: "0",
-                lineHeight: "1.7",
-              });
-
-              // Step 3: Fade in the new content
-              setTimeout(() => {
-                setGhostStyle((prev) => ({
-                  ...prev,
-                  opacity: 1,
-                  transition: "opacity 0.4s ease-out",
-                }));
-
-                // Step 4: Start revealing surrounding text after fade in starts
-                setTimeout(() => {
-                  setSurroundingTextVisible(true);
-                }, 200);
-              }, 50);
-
-              // Phase 6: Clean up after reveal completes
-              setTimeout(() => {
-                setIsAnimating(false);
-                setAnimationPhase("idle");
-                setGhostStyle({});
-                setGhostContent(null);
-                setSurroundingTextVisible(false);
-              }, 2500);
-            }, 350); // Wait for fade out to complete
+            }, 2000);
           }, 800);
         }, 1200);
       }, 100);
