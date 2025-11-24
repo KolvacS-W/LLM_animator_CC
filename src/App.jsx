@@ -48,6 +48,7 @@ Want a cheat-sheet version to keep in your notes?`,
   // - Local image (put in /public folder): "/sketch.png"
   // - Uploaded image: handled via upload button
   sketchContent: `🤔 a good date should encourage: 
+  🙋
   👏 
   📖 
   🧐 

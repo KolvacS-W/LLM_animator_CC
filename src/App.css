@@ -319,7 +319,7 @@
 
 /* Sketch text content */
 .sketch-text {
-  display: inline;
+  display: inline-block; /* inline-block to properly handle multiline content */
   color: #10a37f;
   font-weight: 500;
   white-space: pre-line; /* Preserve newlines like ghost-token */
