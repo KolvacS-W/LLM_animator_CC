@@ -33,7 +33,15 @@ Avoid controversial topics too early – Politics, religion, etc. unless mutuall
 
 Want a cheat-sheet version to keep in your notes?`,
   promptToken: "what should",
-  responseToken: "✅ What You Should Say:",
+  responseToken: `· Ask open-ended questions – “What’s something you’re passionate about lately?”
+
+· Share light personal stories – enough to be real, but not overly intense.
+
+· Give genuine compliments – “I like how you think about that.”
+
+· Show curiosity – “I’ve never tried that! How did you get into it?”
+
+· Express enjoyment – “I’m really glad we met up.”`,
 };
 
 function App() {
