@@ -138,8 +138,12 @@ function App() {
           // Show both tokens - promptToken will shrink, responseToken will grow
           setGhostContent(
             <>
-              <span className="morph-token morph-token-shrinking">{promptToken}</span>
-              <span className="morph-token morph-token-growing">{responseToken}</span>
+              <span className="morph-token morph-token-shrinking">
+                {promptToken}
+              </span>
+              <span className="morph-token morph-token-growing">
+                {responseToken}
+              </span>
             </>
           );
 
@@ -156,8 +160,12 @@ function App() {
           setTimeout(() => {
             setGhostContent(
               <>
-                <span className="morph-token morph-token-shrunk">{promptToken}</span>
-                <span className="morph-token morph-token-grown">{responseToken}</span>
+                <span className="morph-token morph-token-shrunk">
+                  {promptToken}
+                </span>
+                <span className="morph-token morph-token-grown">
+                  {responseToken}
+                </span>
               </>
             );
           }, 50);
@@ -165,6 +173,9 @@ function App() {
           // Phase 4: Expand surrounding text from font-size 0
           setTimeout(() => {
             setAnimationPhase("expand");
+
+            // Get current ghost position (with transform applied)
+            const currentGhostRect = ghostRef.current.getBoundingClientRect();
 
             // Get container position for smooth alignment
             const expandContainerRect =
@@ -177,6 +188,7 @@ function App() {
               tokenIndex + responseToken.length
             );
 
+            // Step 1: First, set ghost at its CURRENT visual position (no jump)
             // Add surrounding text with font-size 0 (collapsed)
             setGhostContent(
               <>
@@ -190,12 +202,12 @@ function App() {
               </>
             );
 
-            // Position ghost at container start, keep current visual position temporarily
+            // Position ghost at current location first (where it visually is now)
             setGhostStyle({
               position: "fixed",
-              left: expandContainerRect.left,
-              top: expandContainerRect.top,
-              width: expandContainerRect.width,
+              left: currentGhostRect.left,
+              top: currentGhostRect.top,
+              width: "auto",
               maxWidth: expandContainerRect.width,
               fontSize: window.getComputedStyle(responseTokenRef.current)
                 .fontSize,
@@ -212,22 +224,60 @@ function App() {
               lineHeight: "1.7",
             });
 
-            // Step 2: Trigger the expansion animation
+            // Step 2: Fly to responseToken's FINAL position (keep text collapsed during fly)
+            const finalTokenRect =
+              responseTokenRef.current.getBoundingClientRect();
+
             setTimeout(() => {
-              setGhostContent(
-                <>
-                  <span className="expand-text expand-text-expanded">
-                    {beforeToken}
-                  </span>
-                  <span className="expand-token">{responseToken}</span>
-                  <span className="expand-text expand-text-expanded">
-                    {afterToken}
-                  </span>
-                </>
-              );
+              // DON'T expand text yet - just fly with collapsed surrounding text
+              setGhostStyle((prev) => ({
+                ...prev,
+                left: finalTokenRect.left,
+                top: finalTokenRect.top,
+                transition:
+                  "left 1s cubic-bezier(0.4, 0, 0.2, 1), top 1s cubic-bezier(0.4, 0, 0.2, 1)",
+              }));
             }, 50);
 
-            // Step 3: Make surrounding text visible (color transition)
+            // Step 3: AFTER fly completes, reposition to container and expand text
+            setTimeout(() => {
+              // Now set position to container top-left (instant, no transition)
+              // and expand the surrounding text
+              setGhostContent(
+                <>
+                  <span className="expand-text expand-text-expanded">
+                    {beforeToken}
+                  </span>
+                  <span className="expand-token">{responseToken}</span>
+                  <span className="expand-text expand-text-expanded">
+                    {afterToken}
+                  </span>
+                </>
+              );
+
+              setGhostStyle({
+                position: "fixed",
+                left: expandContainerRect.left,
+                top: expandContainerRect.top,
+                width: expandContainerRect.width,
+                maxWidth: expandContainerRect.width,
+                fontSize: window.getComputedStyle(responseTokenRef.current)
+                  .fontSize,
+                fontWeight: "normal",
+                color: "#ececf1",
+                opacity: 1,
+                transform: "none",
+                transition: "none",
+                pointerEvents: "none",
+                zIndex: 1000,
+                backgroundColor: "transparent",
+                padding: "0",
+                borderRadius: "0",
+                lineHeight: "1.7",
+              });
+            }, 1100);
+
+            // Step 4: Make surrounding text visible (color transition)
             setTimeout(() => {
               setGhostContent(
                 <>
@@ -240,7 +290,7 @@ function App() {
                   </span>
                 </>
               );
-            }, 900);
+            }, 1200);
 
             // Phase 5: Clean up after reveal completes
             setTimeout(() => {
@@ -248,7 +298,7 @@ function App() {
               setAnimationPhase("idle");
               setGhostStyle({});
               setGhostContent(null);
-            }, 3000);
+            }, 3500);
           }, 1000);
         }, 1200);
       }, 100);
