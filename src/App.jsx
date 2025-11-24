@@ -315,11 +315,14 @@ function App() {
           }, 700); // 100ms gap to let browser render initial state
 
           // Step 4: Shrink sketch content before expand
+          // Timing: 700ms (normal starts) + display duration = shrink time
+          // Increase this value to show sketch longer (e.g., 2700 = 2 seconds display)
           setTimeout(() => {
             setSketchAnimClass("sketch-content-shrunk");
-          }, 1800); // Give more time to display normal state
+          }, 2700); // Display for ~2 seconds before shrinking
 
           // Phase 4: Expand - sketch shrinks into responseToken
+          // Timing: shrink time + 500ms (transition duration)
           setTimeout(() => {
             setAnimationPhase("expand");
 
@@ -375,7 +378,7 @@ function App() {
                 </>
               );
             }, 900);
-          }, 2300); // Wait for shrink animation to complete (1800 + 500ms transition)
+          }, 3200); // Wait for shrink animation to complete (2700 + 500ms transition)
 
           // Clean up after animation completes
           setTimeout(() => {
@@ -384,7 +387,7 @@ function App() {
             setGhostStyle({});
             setGhostContent(null);
             setSketchAnimClass("");
-          }, 5200); // Adjusted for new timing
+          }, 6100); // Adjusted for new timing (3200 + ~2900ms for expand phase)
         }, 1200); // Wait for move animation to complete
       }, 100);
     }, 500);
