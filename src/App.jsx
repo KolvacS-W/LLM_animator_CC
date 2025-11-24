@@ -47,9 +47,12 @@ Want a cheat-sheet version to keep in your notes?`,
   // - Remote image: "image:https://example.com/image.png"
   // - Local image (put in /public folder): "/sketch.png"
   // - Uploaded image: handled via upload button
-  sketchContent: "🤔 ? 📖 👏 🧐 ♥️",
-  // Sketch size in rem (default 2, range 1-10)
-  sketchSize: 3,
+  sketchContent: `🤔 a good date should encourage: 
+  👏 
+  📖 
+  🧐 
+  ♥️`,
+  sketchSize: 1.5,
 };
 
 function App() {
@@ -66,6 +69,7 @@ function App() {
   const [animationPhase, setAnimationPhase] = useState("idle"); // idle, highlight, sketch, move, reveal, expand
   const [ghostStyle, setGhostStyle] = useState({});
   const [ghostContent, setGhostContent] = useState(null); // Can be string or React element
+  const [sketchAnimClass, setSketchAnimClass] = useState(""); // Controls sketch grow/shrink animation
 
   // Refs for DOM elements
   const promptTokenRef = useRef(null);
@@ -228,42 +232,9 @@ function App() {
         borderRadius: "4px",
       });
 
-      // Helper to render sketch content (text or image)
-      const renderSketchContent = (className) => {
-        // Support: "image:url", data URLs, or local paths starting with "/" or "./"
-        const isImage =
-          sketchContent.startsWith("image:") ||
-          sketchContent.startsWith("data:image") ||
-          sketchContent.startsWith("/") ||
-          sketchContent.startsWith("./");
-
-        const sizeStyle = {
-          "--sketch-size": `${sketchSize}rem`,
-        };
-
-        if (isImage) {
-          const imageUrl = sketchContent.startsWith("image:")
-            ? sketchContent.slice(6)
-            : sketchContent;
-          return (
-            <img
-              key="sketch-content"
-              src={imageUrl}
-              alt="sketch"
-              className={`sketch-image ${className}`}
-              style={sizeStyle}
-            />
-          );
-        }
-        return (
-          <span
-            key="sketch-content"
-            className={`sketch-text ${className}`}
-            style={sizeStyle}
-          >
-            {sketchContent}
-          </span>
-        );
+      // Mark that we're showing sketch content (actual rendering uses sketchAnimClass state)
+      const showSketchContent = () => {
+        setGhostContent("__SKETCH__"); // Special marker for sketch content
       };
 
       // Phase 2: Move to response position
@@ -327,26 +298,27 @@ function App() {
             );
           }, 100);
 
-          // Step 2: Show sketch content growing (start at scale 0)
+          // Step 2: Show sketch content growing (starts at font-size 0)
           setTimeout(() => {
-            setGhostContent(renderSketchContent("sketch-content-growing"));
+            setSketchAnimClass("sketch-content-growing");
+            showSketchContent();
             setGhostStyle((prev) => ({
               ...prev,
               backgroundColor: "transparent",
             }));
           }, 600);
 
-          // Step 3: Sketch content grows to normal size
+          // Step 3: Sketch content grows to full size
           setTimeout(() => {
-            setGhostContent(renderSketchContent("sketch-content-normal"));
+            setSketchAnimClass("sketch-content-normal");
           }, 700); // 100ms gap to let browser render initial state
 
           // Step 4: Shrink sketch content before expand
           setTimeout(() => {
-            setGhostContent(renderSketchContent("sketch-content-shrunk"));
+            setSketchAnimClass("sketch-content-shrunk");
           }, 1800); // Give more time to display normal state
 
-          // Phase 4: Expand - after sketch shrinks (500ms transition), show responseToken
+          // Phase 4: Expand - sketch shrinks into responseToken
           setTimeout(() => {
             setAnimationPhase("expand");
 
@@ -402,7 +374,7 @@ function App() {
                 </>
               );
             }, 900);
-          }, 2300); // Wait for shrink animation to complete (1800 + 500ms)
+          }, 2300); // Wait for shrink animation to complete (1800 + 500ms transition)
 
           // Clean up after animation completes
           setTimeout(() => {
@@ -410,6 +382,7 @@ function App() {
             setAnimationPhase("idle");
             setGhostStyle({});
             setGhostContent(null);
+            setSketchAnimClass("");
           }, 5200); // Adjusted for new timing
         }, 1200); // Wait for move animation to complete
       }, 100);
@@ -566,7 +539,39 @@ function App() {
       {/* Ghost element for animation */}
       {ghostContent && (
         <div ref={ghostRef} className="ghost-token" style={ghostStyle}>
-          {ghostContent}
+          {ghostContent === "__SKETCH__"
+            ? // Render sketch content with animation class from state
+              (() => {
+                const isImage =
+                  sketchContent.startsWith("image:") ||
+                  sketchContent.startsWith("data:image") ||
+                  sketchContent.startsWith("/") ||
+                  sketchContent.startsWith("./");
+                const sizeStyle = { "--sketch-size": `${sketchSize}rem` };
+
+                if (isImage) {
+                  const imageUrl = sketchContent.startsWith("image:")
+                    ? sketchContent.slice(6)
+                    : sketchContent;
+                  return (
+                    <img
+                      src={imageUrl}
+                      alt="sketch"
+                      className={`sketch-image ${sketchAnimClass}`}
+                      style={sizeStyle}
+                    />
+                  );
+                }
+                return (
+                  <span
+                    className={`sketch-text ${sketchAnimClass}`}
+                    style={sizeStyle}
+                  >
+                    {sketchContent}
+                  </span>
+                );
+              })()
+            : ghostContent}
         </div>
       )}
 

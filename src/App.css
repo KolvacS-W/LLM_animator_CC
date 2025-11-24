@@ -301,6 +301,7 @@
   display: inline;
   color: #10a37f;
   font-weight: 600;
+  font-size: 8rem;
   transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -319,49 +320,43 @@
 /* Sketch text content */
 .sketch-text {
   display: inline;
-  color: #ffd700;
+  color: #10a37f;
   font-weight: 500;
-  font-size: var(--sketch-size, 2rem);
-  transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sketch-text.sketch-content-growing {
-  transform: scale(0);
+  font-size: 0;
 }
 
 .sketch-text.sketch-content-normal {
-  transform: scale(1);
+  font-size: var(--sketch-size, 2rem);
 }
 
 .sketch-text.sketch-content-shrunk {
-  transform: scale(0);
+  font-size: 0;
 }
 
 /* Sketch image content */
 .sketch-image {
   display: inline-block;
   height: var(--sketch-size, 2rem);
-  max-height: var(--sketch-size, 2rem);
   width: auto;
   vertical-align: middle;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.5s ease-in-out;
+  transform-origin: left center;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sketch-image.sketch-content-growing {
   transform: scale(0);
-  opacity: 0;
 }
 
 .sketch-image.sketch-content-normal {
   transform: scale(1);
-  opacity: 1;
 }
 
 .sketch-image.sketch-content-shrunk {
   transform: scale(0);
-  opacity: 0;
 }
 
 /* Morph token animation - promptToken shrinks, responseToken grows */
@@ -401,8 +396,7 @@
 /* Expand animation - surrounding text grows from font-size 0 */
 .expand-text {
   display: inline;
-  transition: font-size 1s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.8s ease-out;
+  transition: font-size 1s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s ease-out;
 }
 
 /* Collapsed state: font-size 0, transparent */
