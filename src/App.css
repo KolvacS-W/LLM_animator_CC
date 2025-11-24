@@ -322,6 +322,7 @@
   display: inline;
   color: #10a37f;
   font-weight: 500;
+  white-space: pre-line; /* Preserve newlines like ghost-token */
   transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
