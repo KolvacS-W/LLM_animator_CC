@@ -5,43 +5,49 @@ import "./App.css";
 const CONFIG = {
   prompt:
     "give me 5 bullet points of what should and shouldn't say on a first date",
-  response: `Sure! Here are 5 quick dos and don’ts for what to say on a first date:
+  response: `Sure! Here are 5 quick dos and don'ts for what to say on a first date:
 
 ✅ What You Should Say:
 
-· Ask open-ended questions – “What’s something you’re passionate about lately?”
+· Ask open-ended questions – "What's something you're passionate about lately?"
 
 · Share light personal stories – enough to be real, but not overly intense.
 
-· Give genuine compliments – “I like how you think about that.”
+· Give genuine compliments – "I like how you think about that."
 
-· Show curiosity – “I’ve never tried that! How did you get into it?”
+· Show curiosity – "I've never tried that! How did you get into it?"
 
-· Express enjoyment – “I’m really glad we met up.”
+· Express enjoyment – "I'm really glad we met up."
 
-❌ What You Shouldn’t Say:
+❌ What You Shouldn't Say:
 
-Avoid ex talk – Don’t dive into your past relationships.
+Avoid ex talk – Don't dive into your past relationships.
 
-Don’t overshare heavy topics – Illness, trauma, financial woes.
+Don't overshare heavy topics – Illness, trauma, financial woes.
 
-No interview mode – Don’t rapid-fire questions like a job interview.
+No interview mode – Don't rapid-fire questions like a job interview.
 
-Don’t brag or self-promote too much – Confidence ≠ arrogance.
+Don't brag or self-promote too much – Confidence ≠ arrogance.
 
 Avoid controversial topics too early – Politics, religion, etc. unless mutually welcomed.
 
 Want a cheat-sheet version to keep in your notes?`,
   promptToken: "what should",
-  responseToken: `· Ask open-ended questions – “What’s something you’re passionate about lately?”
+  responseToken: `· Ask open-ended questions – "What's something you're passionate about lately?"
 
 · Share light personal stories – enough to be real, but not overly intense.
 
-· Give genuine compliments – “I like how you think about that.”
+· Give genuine compliments – "I like how you think about that."
 
-· Show curiosity – “I’ve never tried that! How did you get into it?”
+· Show curiosity – "I've never tried that! How did you get into it?"
 
-· Express enjoyment – “I’m really glad we met up.”`,
+· Express enjoyment – "I'm really glad we met up."`,
+  // Sketch content options:
+  // - Text: "🤔 Processing..."
+  // - Remote image: "image:https://example.com/image.png"
+  // - Local image (put in /public folder): "/sketch.png"
+  // - Uploaded image: handled via upload button
+  sketchContent: "🤔 Processing...",
 };
 
 function App() {
@@ -50,10 +56,11 @@ function App() {
   const [responseToken, setResponseToken] = useState(CONFIG.responseToken);
   const [promptText] = useState(CONFIG.prompt);
   const [responseText] = useState(CONFIG.response);
+  const [sketchContent, setSketchContent] = useState(CONFIG.sketchContent);
 
   // Animation state
   const [isAnimating, setIsAnimating] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState("idle"); // idle, highlight, move, reveal, expand
+  const [animationPhase, setAnimationPhase] = useState("idle"); // idle, highlight, sketch, move, reveal, expand
   const [ghostStyle, setGhostStyle] = useState({});
   const [ghostContent, setGhostContent] = useState(null); // Can be string or React element
 
@@ -62,40 +69,54 @@ function App() {
   const responseTokenRef = useRef(null);
   const ghostRef = useRef(null);
   const responseContainerRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Handle image upload
+  const handleImageUpload = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSketchContent(event.target.result); // Set as data URL
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
 
   // Handle scroll and resize to keep ghost in sync with page
   useEffect(() => {
     if (!isAnimating || !ghostContent) return;
 
     const updateGhostPosition = () => {
-      if (animationPhase === "highlight" || animationPhase === "move") {
-        // During highlight/move phases, ghost follows prompt token position
+      if (animationPhase === "highlight") {
+        // During highlight, ghost follows prompt token position
         if (promptTokenRef.current && responseContainerRef.current) {
           const promptRect = promptTokenRef.current.getBoundingClientRect();
-          const containerRect = responseContainerRef.current.getBoundingClientRect();
+          const containerRect =
+            responseContainerRef.current.getBoundingClientRect();
           const availableWidth = containerRect.right - promptRect.left;
 
-          if (animationPhase === "highlight") {
-            // Just update position, keep at prompt location
-            setGhostStyle((prev) => ({
-              ...prev,
-              left: promptRect.left,
-              top: promptRect.top,
-              maxWidth: availableWidth,
-            }));
-          } else if (animationPhase === "move") {
-            // During move, only update left/top to follow prompt position
-            // DON'T update transform - it's being animated by CSS and the delta stays constant
-            setGhostStyle((prev) => ({
-              ...prev,
-              left: promptRect.left,
-              top: promptRect.top,
-            }));
-          }
+          setGhostStyle((prev) => ({
+            ...prev,
+            left: promptRect.left,
+            top: promptRect.top,
+            maxWidth: availableWidth,
+          }));
         }
-      } else if (animationPhase === "reveal") {
-        // During reveal, ghost still has transform from move phase
-        // Only update left/top to follow prompt position (same as move phase)
+      } else if (animationPhase === "move") {
+        // During move, only update left/top to follow prompt position
+        // DON'T update transform - it's being animated by CSS
+        if (promptTokenRef.current) {
+          const promptRect = promptTokenRef.current.getBoundingClientRect();
+          setGhostStyle((prev) => ({
+            ...prev,
+            left: promptRect.left,
+            top: promptRect.top,
+          }));
+        }
+      } else if (animationPhase === "sketch") {
+        // During sketch, ghost is at response position (has transform from move)
+        // Update left/top to follow prompt position
         if (promptTokenRef.current) {
           const promptRect = promptTokenRef.current.getBoundingClientRect();
           setGhostStyle((prev) => ({
@@ -108,7 +129,8 @@ function App() {
         // During expand, ghost is positioned directly at container (no transform)
         // Safe to update all position properties
         if (responseContainerRef.current) {
-          const containerRect = responseContainerRef.current.getBoundingClientRect();
+          const containerRect =
+            responseContainerRef.current.getBoundingClientRect();
           setGhostStyle((prev) => ({
             ...prev,
             left: containerRect.left,
@@ -179,7 +201,6 @@ function App() {
 
       // Get initial positions
       const promptRect = promptTokenRef.current.getBoundingClientRect();
-      // Calculate available width from token position to container edge (for text wrapping)
       const containerRect =
         responseContainerRef.current.getBoundingClientRect();
       const availableWidth = containerRect.right - promptRect.left;
@@ -204,11 +225,37 @@ function App() {
         borderRadius: "4px",
       });
 
+      // Helper to render sketch content (text or image)
+      const renderSketchContent = (className) => {
+        // Support: "image:url", data URLs, or local paths starting with "/" or "./"
+        const isImage =
+          sketchContent.startsWith("image:") ||
+          sketchContent.startsWith("data:image") ||
+          sketchContent.startsWith("/") ||
+          sketchContent.startsWith("./");
+
+        if (isImage) {
+          const imageUrl = sketchContent.startsWith("image:")
+            ? sketchContent.slice(6)
+            : sketchContent;
+          return (
+            <img
+              src={imageUrl}
+              alt="sketch"
+              className={`sketch-image ${className}`}
+            />
+          );
+        }
+        return (
+          <span className={`sketch-text ${className}`}>{sketchContent}</span>
+        );
+      };
+
+      // Phase 2: Move to response position
       setAnimationPhase("move");
 
-      // Phase 2: Move to response position with fade
       setTimeout(() => {
-        // Recalculate positions fresh to account for any text reflow/wrapping
+        // Recalculate positions
         const currentPromptRect =
           promptTokenRef.current.getBoundingClientRect();
         const currentResponseRect =
@@ -217,7 +264,6 @@ function App() {
           responseContainerRef.current.getBoundingClientRect();
         const deltaX = currentResponseRect.left - currentPromptRect.left;
         const deltaY = currentResponseRect.top - currentPromptRect.top;
-        // Calculate the maxWidth for response area (from response token position to container edge)
         const responseMaxWidth =
           currentContainerRect.right - currentResponseRect.left;
 
@@ -231,11 +277,11 @@ function App() {
             "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s ease-in-out, color 1.2s ease-in-out, max-width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
         }));
 
-        // Phase 3: Shrink promptToken, fly to response position, then show full text
+        // Phase 3: Sketch phase - at response position
         setTimeout(() => {
-          setAnimationPhase("reveal");
+          setAnimationPhase("sketch");
 
-          // Get positions we'll need
+          // Get positions for expand phase
           const expandContainerRect =
             responseContainerRef.current.getBoundingClientRect();
           const tokenIndex = responseText.indexOf(responseToken);
@@ -244,29 +290,48 @@ function App() {
             tokenIndex + responseToken.length
           );
 
-          // Step 1: Shrink promptToken first
+          // Show promptToken at response position (visible)
           setGhostContent(
-            <span className="morph-token morph-token-shrinking">
+            <span className="sketch-token sketch-token-normal">
               {promptToken}
             </span>
           );
-
           setGhostStyle((prev) => ({
             ...prev,
-            backgroundColor: "transparent",
+            color: "#10a37f",
+            backgroundColor: "rgba(16, 163, 127, 0.15)",
             transition: "none",
           }));
 
-          // Trigger shrink animation
+          // Step 1: Shrink promptToken
           setTimeout(() => {
             setGhostContent(
-              <span className="morph-token morph-token-shrunk">
+              <span className="sketch-token sketch-token-shrunk">
                 {promptToken}
               </span>
             );
-          }, 50);
+          }, 100);
 
-          // Step 2: After shrink completes, instantly position at container and show full text
+          // Step 2: Show sketch content growing
+          setTimeout(() => {
+            setGhostContent(renderSketchContent("sketch-content-growing"));
+            setGhostStyle((prev) => ({
+              ...prev,
+              backgroundColor: "transparent",
+            }));
+          }, 600);
+
+          // Step 3: Sketch content fully grown
+          setTimeout(() => {
+            setGhostContent(renderSketchContent("sketch-content-normal"));
+          }, 650);
+
+          // Step 4: Shrink sketch content
+          setTimeout(() => {
+            setGhostContent(renderSketchContent("sketch-content-shrunk"));
+          }, 1600);
+
+          // Phase 4: Expand - sketch shrinks into responseToken
           setTimeout(() => {
             setAnimationPhase("expand");
 
@@ -279,7 +344,7 @@ function App() {
               </>
             );
 
-            // Instantly position at container (no fly animation)
+            // Position at container
             setGhostStyle({
               position: "fixed",
               left: expandContainerRect.left,
@@ -312,7 +377,7 @@ function App() {
               );
             }, 50);
 
-            // Step 3: After responseToken grows, reveal surrounding text smoothly
+            // Reveal surrounding text smoothly
             setTimeout(() => {
               setGhostContent(
                 <>
@@ -322,19 +387,19 @@ function App() {
                 </>
               );
             }, 900);
-          }, 900);
+          }, 2100);
 
-          // Phase 4: Clean up after animation completes
+          // Clean up after animation completes
           setTimeout(() => {
             setIsAnimating(false);
             setAnimationPhase("idle");
             setGhostStyle({});
             setGhostContent(null);
-          }, 4000);
-        }, 1200);
+          }, 5000);
+        }, 1200); // Wait for move animation to complete
       }, 100);
     }, 500);
-  }, [isAnimating, promptToken, responseToken, responseText]);
+  }, [isAnimating, promptToken, responseToken, responseText, sketchContent]);
 
   // Determine which tokens should be highlighted based on animation phase
   const isPromptHighlighted =
@@ -371,6 +436,53 @@ function App() {
             onChange={(e) => setResponseToken(e.target.value)}
             disabled={isAnimating}
           />
+        </div>
+        <div className="control-group sketch-control">
+          <label htmlFor="sketchContent">Sketch Content:</label>
+          <div className="sketch-input-row">
+            <input
+              id="sketchContent"
+              type="text"
+              value={
+                sketchContent.startsWith("data:image")
+                  ? "(uploaded image)"
+                  : sketchContent
+              }
+              onChange={(e) => setSketchContent(e.target.value)}
+              disabled={isAnimating || sketchContent.startsWith("data:image")}
+              placeholder="Text, /local.png, or image:URL"
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={isAnimating}
+              style={{ display: "none" }}
+            />
+            <button
+              type="button"
+              className="upload-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isAnimating}
+              title="Upload image"
+            >
+              Upload
+            </button>
+            {(sketchContent.startsWith("data:image") ||
+              sketchContent.startsWith("/") ||
+              sketchContent.startsWith("./")) && (
+              <button
+                type="button"
+                className="clear-btn"
+                onClick={() => setSketchContent(CONFIG.sketchContent)}
+                disabled={isAnimating}
+                title="Clear image"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
         <button
           className="animate-btn"

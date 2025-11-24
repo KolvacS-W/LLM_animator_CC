@@ -74,6 +74,57 @@
   cursor: not-allowed;
 }
 
+/* Sketch control with upload */
+.sketch-control {
+  min-width: 200px;
+}
+
+.sketch-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sketch-input-row input[type="text"] {
+  flex: 1;
+  min-width: 120px;
+}
+
+.upload-btn,
+.clear-btn {
+  padding: 10px 12px;
+  border: 1px solid #565869;
+  border-radius: 8px;
+  background-color: #40414f;
+  color: #ececf1;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.upload-btn:hover:not(:disabled),
+.clear-btn:hover:not(:disabled) {
+  background-color: #565869;
+  border-color: #10a37f;
+}
+
+.upload-btn:disabled,
+.clear-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clear-btn {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.clear-btn:hover:not(:disabled) {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
 .animate-btn {
   padding: 10px 24px;
   background-color: #10a37f;
@@ -204,6 +255,70 @@
   background-color: rgba(16, 163, 127, 0.15);
   padding: 2px 4px;
   border-radius: 4px;
+}
+
+/* Sketch phase animations */
+.sketch-token {
+  display: inline;
+  color: #10a37f;
+  font-weight: 600;
+  transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sketch-token-normal {
+  font-size: inherit;
+}
+
+.sketch-token-shrunk {
+  font-size: 0;
+}
+
+.sketch-token-growing {
+  font-size: 0;
+}
+
+/* Sketch text content */
+.sketch-text {
+  display: inline;
+  color: #ffd700;
+  font-weight: 500;
+  transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sketch-content-growing {
+  font-size: 0;
+}
+
+.sketch-content-normal {
+  font-size: inherit;
+}
+
+.sketch-content-shrunk {
+  font-size: 0;
+}
+
+/* Sketch image content */
+.sketch-image {
+  display: inline-block;
+  max-height: 1.5em;
+  vertical-align: middle;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.5s ease-in-out;
+}
+
+.sketch-image.sketch-content-growing {
+  transform: scale(0);
+  opacity: 0;
+}
+
+.sketch-image.sketch-content-normal {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.sketch-image.sketch-content-shrunk {
+  transform: scale(0);
+  opacity: 0;
 }
 
 /* Morph token animation - promptToken shrinks, responseToken grows */
