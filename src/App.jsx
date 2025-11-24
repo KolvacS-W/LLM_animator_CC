@@ -47,7 +47,9 @@ Want a cheat-sheet version to keep in your notes?`,
   // - Remote image: "image:https://example.com/image.png"
   // - Local image (put in /public folder): "/sketch.png"
   // - Uploaded image: handled via upload button
-  sketchContent: "🤔 Processing...",
+  sketchContent: "🤔 ? 📖 👏 🧐 ♥️",
+  // Sketch size in rem (default 2, range 1-10)
+  sketchSize: 3,
 };
 
 function App() {
@@ -57,6 +59,7 @@ function App() {
   const [promptText] = useState(CONFIG.prompt);
   const [responseText] = useState(CONFIG.response);
   const [sketchContent, setSketchContent] = useState(CONFIG.sketchContent);
+  const [sketchSize, setSketchSize] = useState(CONFIG.sketchSize);
 
   // Animation state
   const [isAnimating, setIsAnimating] = useState(false);
@@ -234,20 +237,32 @@ function App() {
           sketchContent.startsWith("/") ||
           sketchContent.startsWith("./");
 
+        const sizeStyle = {
+          "--sketch-size": `${sketchSize}rem`,
+        };
+
         if (isImage) {
           const imageUrl = sketchContent.startsWith("image:")
             ? sketchContent.slice(6)
             : sketchContent;
           return (
             <img
+              key="sketch-content"
               src={imageUrl}
               alt="sketch"
               className={`sketch-image ${className}`}
+              style={sizeStyle}
             />
           );
         }
         return (
-          <span className={`sketch-text ${className}`}>{sketchContent}</span>
+          <span
+            key="sketch-content"
+            className={`sketch-text ${className}`}
+            style={sizeStyle}
+          >
+            {sketchContent}
+          </span>
         );
       };
 
@@ -312,7 +327,7 @@ function App() {
             );
           }, 100);
 
-          // Step 2: Show sketch content growing
+          // Step 2: Show sketch content growing (start at scale 0)
           setTimeout(() => {
             setGhostContent(renderSketchContent("sketch-content-growing"));
             setGhostStyle((prev) => ({
@@ -321,17 +336,17 @@ function App() {
             }));
           }, 600);
 
-          // Step 3: Sketch content fully grown
+          // Step 3: Sketch content grows to normal size
           setTimeout(() => {
             setGhostContent(renderSketchContent("sketch-content-normal"));
-          }, 650);
+          }, 700); // 100ms gap to let browser render initial state
 
-          // Step 4: Shrink sketch content
+          // Step 4: Shrink sketch content before expand
           setTimeout(() => {
             setGhostContent(renderSketchContent("sketch-content-shrunk"));
-          }, 1600);
+          }, 1800); // Give more time to display normal state
 
-          // Phase 4: Expand - sketch shrinks into responseToken
+          // Phase 4: Expand - after sketch shrinks (500ms transition), show responseToken
           setTimeout(() => {
             setAnimationPhase("expand");
 
@@ -387,7 +402,7 @@ function App() {
                 </>
               );
             }, 900);
-          }, 2100);
+          }, 2300); // Wait for shrink animation to complete (1800 + 500ms)
 
           // Clean up after animation completes
           setTimeout(() => {
@@ -395,11 +410,18 @@ function App() {
             setAnimationPhase("idle");
             setGhostStyle({});
             setGhostContent(null);
-          }, 5000);
+          }, 5200); // Adjusted for new timing
         }, 1200); // Wait for move animation to complete
       }, 100);
     }, 500);
-  }, [isAnimating, promptToken, responseToken, responseText, sketchContent]);
+  }, [
+    isAnimating,
+    promptToken,
+    responseToken,
+    responseText,
+    sketchContent,
+    sketchSize,
+  ]);
 
   // Determine which tokens should be highlighted based on animation phase
   const isPromptHighlighted =
@@ -483,6 +505,19 @@ function App() {
               </button>
             )}
           </div>
+        </div>
+        <div className="control-group sketch-size-control">
+          <label htmlFor="sketchSize">Sketch Size: {sketchSize}rem</label>
+          <input
+            id="sketchSize"
+            type="range"
+            min="1"
+            max="10"
+            step="0.5"
+            value={sketchSize}
+            onChange={(e) => setSketchSize(parseFloat(e.target.value))}
+            disabled={isAnimating}
+          />
         </div>
         <button
           className="animate-btn"
