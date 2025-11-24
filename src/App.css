@@ -239,6 +239,40 @@
   border-radius: 4px;
 }
 
+/* Expand animation - surrounding text grows from font-size 0 */
+.expand-text {
+  display: inline;
+  transition: font-size 1s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.8s ease-out;
+}
+
+/* Collapsed state: font-size 0, transparent */
+.expand-text-collapsed {
+  font-size: 0;
+  color: transparent;
+}
+
+/* Expanded state: normal font-size, still transparent */
+.expand-text-expanded {
+  font-size: inherit;
+  color: transparent;
+}
+
+/* Visible state: normal font-size, visible color */
+.expand-text-visible {
+  font-size: inherit;
+  color: #ececf1;
+}
+
+/* The token in expand phase */
+.expand-token {
+  color: #10a37f;
+  font-weight: 600;
+  background-color: rgba(16, 163, 127, 0.15);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
 /* Footer */
 .footer {
   text-align: center;

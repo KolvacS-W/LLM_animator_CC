@@ -22,7 +22,6 @@ function App() {
   const [animationPhase, setAnimationPhase] = useState("idle"); // idle, highlight, move, reveal, expand
   const [ghostStyle, setGhostStyle] = useState({});
   const [ghostContent, setGhostContent] = useState(null); // Can be string or React element
-  const [surroundingTextVisible, setSurroundingTextVisible] = useState(false);
 
   // Refs for DOM elements
   const promptTokenRef = useRef(null);
@@ -163,86 +162,94 @@ function App() {
             );
           }, 50);
 
-          // Phase 4: Hold briefly, then fade out before expansion
+          // Phase 4: Expand surrounding text from font-size 0
           setTimeout(() => {
-            // Step 1: Fade out the current ghost (responseToken only)
-            setGhostStyle((prev) => ({
-              ...prev,
-              opacity: 0,
-              transition: "opacity 0.3s ease-out",
-            }));
+            setAnimationPhase("expand");
 
-            // Step 2: After fade out completes, switch to full text content
+            // Get container position for smooth alignment
+            const expandContainerRect =
+              responseContainerRef.current.getBoundingClientRect();
+
+            // Split response text around the token
+            const tokenIndex = responseText.indexOf(responseToken);
+            const beforeToken = responseText.slice(0, tokenIndex);
+            const afterToken = responseText.slice(
+              tokenIndex + responseToken.length
+            );
+
+            // Add surrounding text with font-size 0 (collapsed)
+            setGhostContent(
+              <>
+                <span className="expand-text expand-text-collapsed">
+                  {beforeToken}
+                </span>
+                <span className="expand-token">{responseToken}</span>
+                <span className="expand-text expand-text-collapsed">
+                  {afterToken}
+                </span>
+              </>
+            );
+
+            // Position ghost at container start, keep current visual position temporarily
+            setGhostStyle({
+              position: "fixed",
+              left: expandContainerRect.left,
+              top: expandContainerRect.top,
+              width: expandContainerRect.width,
+              maxWidth: expandContainerRect.width,
+              fontSize: window.getComputedStyle(responseTokenRef.current)
+                .fontSize,
+              fontWeight: "normal",
+              color: "#ececf1",
+              opacity: 1,
+              transform: "none",
+              transition: "none",
+              pointerEvents: "none",
+              zIndex: 1000,
+              backgroundColor: "transparent",
+              padding: "0",
+              borderRadius: "0",
+              lineHeight: "1.7",
+            });
+
+            // Step 2: Trigger the expansion animation
             setTimeout(() => {
-              setAnimationPhase("expand");
-              setSurroundingTextVisible(false);
-
-              // Get positions for the transition
-              const expandContainerRect =
-                responseContainerRef.current.getBoundingClientRect();
-
-              // Create the full response with token highlighted and rest hidden
-              const tokenIndex = responseText.indexOf(responseToken);
-              const beforeToken = responseText.slice(0, tokenIndex);
-              const afterToken = responseText.slice(
-                tokenIndex + responseToken.length
-              );
-
-              // Update content to full text
               setGhostContent(
                 <>
-                  <span className="ghost-surrounding">{beforeToken}</span>
-                  <span className="ghost-token-highlight">{responseToken}</span>
-                  <span className="ghost-surrounding">{afterToken}</span>
+                  <span className="expand-text expand-text-expanded">
+                    {beforeToken}
+                  </span>
+                  <span className="expand-token">{responseToken}</span>
+                  <span className="expand-text expand-text-expanded">
+                    {afterToken}
+                  </span>
                 </>
               );
+            }, 50);
 
-              // Position ghost at the container location, initially invisible
-              setGhostStyle({
-                position: "fixed",
-                left: expandContainerRect.left,
-                top: expandContainerRect.top,
-                width: expandContainerRect.width,
-                maxWidth: expandContainerRect.width,
-                fontSize: window.getComputedStyle(responseTokenRef.current)
-                  .fontSize,
-                fontWeight: "normal",
-                color: "#ececf1",
-                opacity: 0,
-                transform: "none",
-                transition: "none",
-                pointerEvents: "none",
-                zIndex: 1000,
-                backgroundColor: "transparent",
-                padding: "0",
-                borderRadius: "0",
-                lineHeight: "1.7",
-              });
+            // Step 3: Make surrounding text visible (color transition)
+            setTimeout(() => {
+              setGhostContent(
+                <>
+                  <span className="expand-text expand-text-visible">
+                    {beforeToken}
+                  </span>
+                  <span className="expand-token">{responseToken}</span>
+                  <span className="expand-text expand-text-visible">
+                    {afterToken}
+                  </span>
+                </>
+              );
+            }, 900);
 
-              // Step 3: Fade in the new content
-              setTimeout(() => {
-                setGhostStyle((prev) => ({
-                  ...prev,
-                  opacity: 1,
-                  transition: "opacity 0.4s ease-out",
-                }));
-
-                // Step 4: Start revealing surrounding text after fade in starts
-                setTimeout(() => {
-                  setSurroundingTextVisible(true);
-                }, 200);
-              }, 50);
-
-              // Phase 6: Clean up after reveal completes
-              setTimeout(() => {
-                setIsAnimating(false);
-                setAnimationPhase("idle");
-                setGhostStyle({});
-                setGhostContent(null);
-                setSurroundingTextVisible(false);
-              }, 2500);
-            }, 350); // Wait for fade out to complete
-          }, 800);
+            // Phase 5: Clean up after reveal completes
+            setTimeout(() => {
+              setIsAnimating(false);
+              setAnimationPhase("idle");
+              setGhostStyle({});
+              setGhostContent(null);
+            }, 3000);
+          }, 1000);
         }, 1200);
       }, 100);
     }, 500);
@@ -330,13 +337,7 @@ function App() {
 
       {/* Ghost element for animation */}
       {ghostContent && (
-        <div
-          ref={ghostRef}
-          className={`ghost-token ${
-            surroundingTextVisible ? "surrounding-visible" : ""
-          }`}
-          style={ghostStyle}
-        >
+        <div ref={ghostRef} className="ghost-token" style={ghostStyle}>
           {ghostContent}
         </div>
       )}
