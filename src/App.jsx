@@ -4,10 +4,36 @@ import "./App.css";
 // Configuration: Define prompt and response content with tokens
 const CONFIG = {
   prompt:
-    "what are the good things to ask to get to know a girl when you go on a second date?",
-  response: `A second date is usually when you move from first-impression chemistry to genuine connection — so your questions should feel curious, personal, and emotionally open, but not like an interrogation. Here are some great directions and examples:`,
-  promptToken: "good things to ask",
-  responseToken: "genuine connection — so your questions should feel",
+    "give me 5 bullet points of what should and shouldn't say on a first date",
+  response: `Sure! Here are 5 quick dos and don’ts for what to say on a first date:
+
+✅ What You Should Say:
+
+· Ask open-ended questions – “What’s something you’re passionate about lately?”
+
+· Share light personal stories – enough to be real, but not overly intense.
+
+· Give genuine compliments – “I like how you think about that.”
+
+· Show curiosity – “I’ve never tried that! How did you get into it?”
+
+· Express enjoyment – “I’m really glad we met up.”
+
+❌ What You Shouldn’t Say:
+
+Avoid ex talk – Don’t dive into your past relationships.
+
+Don’t overshare heavy topics – Illness, trauma, financial woes.
+
+No interview mode – Don’t rapid-fire questions like a job interview.
+
+Don’t brag or self-promote too much – Confidence ≠ arrogance.
+
+Avoid controversial topics too early – Politics, religion, etc. unless mutually welcomed.
+
+Want a cheat-sheet version to keep in your notes?`,
+  promptToken: "what should",
+  responseToken: "✅ What You Should Say:",
 };
 
 function App() {
@@ -211,6 +237,17 @@ function App() {
                 </>
               );
             }, 50);
+
+            // Step 3: After responseToken grows, reveal surrounding text smoothly
+            setTimeout(() => {
+              setGhostContent(
+                <>
+                  <span className="expand-text-revealing">{beforeToken}</span>
+                  <span className="expand-token-grown">{responseToken}</span>
+                  <span className="expand-text-revealing">{afterToken}</span>
+                </>
+              );
+            }, 900);
           }, 900);
 
           // Phase 4: Clean up after animation completes
@@ -219,7 +256,7 @@ function App() {
             setAnimationPhase("idle");
             setGhostStyle({});
             setGhostContent(null);
-          }, 3500);
+          }, 4000);
         }, 1200);
       }, 100);
     }, 500);

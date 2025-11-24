@@ -285,6 +285,13 @@
   color: transparent;
 }
 
+/* Surrounding text revealing smoothly */
+.expand-text-revealing {
+  display: inline;
+  color: #ececf1;
+  transition: color 1s ease-out;
+}
+
 /* ResponseToken growing from font-size 0 */
 .expand-token-growing {
   display: inline;
