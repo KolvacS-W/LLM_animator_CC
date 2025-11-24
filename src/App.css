@@ -185,61 +185,55 @@
   line-height: 1.7;
 }
 
-/* Ghost surrounding text - collapsed state (font-size 0) */
+/* Ghost surrounding text (initially hidden, then revealed) */
 .ghost-surrounding {
-  display: inline;
-  /* DEBUG: changed from transparent to visible */
   color: transparent;
-  transition: font-size 1.2s cubic-bezier(0.4, 0, 0.2, 1), color 1.5s ease-out;
+  transition: color 1.5s ease-out;
 }
 
-.ghost-surrounding-collapsed {
-  font-size: 0;
-}
-
-/* Ghost surrounding text - expanded state (normal size, still transparent) */
-.ghost-surrounding-expanded {
-  font-size: inherit;
-  /* DEBUG: changed from transparent to visible */
-  color: transparent;
-}
-
-/* Ghost surrounding text - visible state (normal size, visible) */
-.ghost-surrounding-visible {
-  font-size: inherit;
-  color: #ececf1;
-}
-
-/* Legacy class for backward compatibility */
+/* When surrounding text should be visible */
 .ghost-token.surrounding-visible .ghost-surrounding {
   color: #ececf1;
 }
 
-/* The main token in the ghost (promptToken or responseToken) */
-.ghost-main-token {
+/* The highlighted token in the expanded ghost */
+.ghost-token-highlight {
   color: #10a37f;
   font-weight: 600;
   background-color: rgba(16, 163, 127, 0.15);
   padding: 2px 4px;
   border-radius: 4px;
-  transition: color 0.4s ease-out, opacity 0.4s ease-out;
 }
 
-/* Token fading during morph */
-.ghost-main-token-fading {
-  /* DEBUG: changed from transparent to visible */
-  color: #10a37f;
-}
-
-/* Token visible after morph */
-.ghost-main-token-visible {
-  color: #10a37f;
-}
-
-/* Legacy highlighted token class */
-.ghost-token-highlight {
+/* Morph token animation - promptToken shrinks, responseToken grows */
+.morph-token {
+  display: inline;
   color: #10a37f;
   font-weight: 600;
+  transition: font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Initial state: promptToken at normal size */
+.morph-token-shrinking {
+  font-size: inherit;
+  background-color: rgba(16, 163, 127, 0.15);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* Initial state: responseToken at size 0 */
+.morph-token-growing {
+  font-size: 0;
+}
+
+/* Final state: promptToken shrunk to 0 */
+.morph-token-shrunk {
+  font-size: 0;
+}
+
+/* Final state: responseToken at normal size */
+.morph-token-grown {
+  font-size: inherit;
   background-color: rgba(16, 163, 127, 0.15);
   padding: 2px 4px;
   border-radius: 4px;
