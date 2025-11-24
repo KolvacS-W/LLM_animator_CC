@@ -273,6 +273,42 @@
   border-radius: 4px;
 }
 
+/* Surrounding text that appears instantly (no animation) */
+.expand-text-instant {
+  display: inline;
+  color: #ececf1;
+}
+
+/* Surrounding text that is invisible (transparent) */
+.expand-text-invisible {
+  display: inline;
+  color: transparent;
+}
+
+/* ResponseToken growing from font-size 0 */
+.expand-token-growing {
+  display: inline;
+  font-size: 0;
+  color: #10a37f;
+  font-weight: 600;
+  background-color: rgba(16, 163, 127, 0.15);
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ResponseToken fully grown */
+.expand-token-grown {
+  display: inline;
+  font-size: inherit;
+  color: #10a37f;
+  font-weight: 600;
+  background-color: rgba(16, 163, 127, 0.15);
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Footer */
 .footer {
   text-align: center;
