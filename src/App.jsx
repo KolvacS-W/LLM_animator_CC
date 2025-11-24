@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import "./App.css";
 
 // Configuration: Define prompt and response content with tokens
@@ -62,6 +62,72 @@ function App() {
   const responseTokenRef = useRef(null);
   const ghostRef = useRef(null);
   const responseContainerRef = useRef(null);
+
+  // Handle scroll and resize to keep ghost in sync with page
+  useEffect(() => {
+    if (!isAnimating || !ghostContent) return;
+
+    const updateGhostPosition = () => {
+      if (animationPhase === "highlight" || animationPhase === "move") {
+        // During highlight/move phases, ghost follows prompt token position
+        if (promptTokenRef.current && responseContainerRef.current) {
+          const promptRect = promptTokenRef.current.getBoundingClientRect();
+          const containerRect = responseContainerRef.current.getBoundingClientRect();
+          const availableWidth = containerRect.right - promptRect.left;
+
+          if (animationPhase === "highlight") {
+            // Just update position, keep at prompt location
+            setGhostStyle((prev) => ({
+              ...prev,
+              left: promptRect.left,
+              top: promptRect.top,
+              maxWidth: availableWidth,
+            }));
+          } else if (animationPhase === "move") {
+            // During move, only update left/top to follow prompt position
+            // DON'T update transform - it's being animated by CSS and the delta stays constant
+            setGhostStyle((prev) => ({
+              ...prev,
+              left: promptRect.left,
+              top: promptRect.top,
+            }));
+          }
+        }
+      } else if (animationPhase === "reveal") {
+        // During reveal, ghost still has transform from move phase
+        // Only update left/top to follow prompt position (same as move phase)
+        if (promptTokenRef.current) {
+          const promptRect = promptTokenRef.current.getBoundingClientRect();
+          setGhostStyle((prev) => ({
+            ...prev,
+            left: promptRect.left,
+            top: promptRect.top,
+          }));
+        }
+      } else if (animationPhase === "expand") {
+        // During expand, ghost is positioned directly at container (no transform)
+        // Safe to update all position properties
+        if (responseContainerRef.current) {
+          const containerRect = responseContainerRef.current.getBoundingClientRect();
+          setGhostStyle((prev) => ({
+            ...prev,
+            left: containerRect.left,
+            top: containerRect.top,
+            width: containerRect.width,
+            maxWidth: containerRect.width,
+          }));
+        }
+      }
+    };
+
+    window.addEventListener("scroll", updateGhostPosition, true);
+    window.addEventListener("resize", updateGhostPosition);
+
+    return () => {
+      window.removeEventListener("scroll", updateGhostPosition, true);
+      window.removeEventListener("resize", updateGhostPosition);
+    };
+  }, [isAnimating, animationPhase, ghostContent]);
 
   // Function to wrap ONLY the first occurrence of token in text with a span for highlighting
   const wrapTokenInText = useCallback((text, token, ref, isHighlighted) => {
