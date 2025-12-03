@@ -2,6 +2,60 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import "./App.css";
 
 // Configuration: Define prompt and response content with tokens
+// const CONFIG = {
+//   prompt:
+//     "give me 5 bullet points of what should and shouldn't say on a first date",
+//   response: `Sure! Here are 5 quick dos and don'ts for what to say on a first date:
+
+// ✅ What You Should Say:
+
+// · Ask open-ended questions – "What's something you're passionate about lately?"
+
+// · Share light personal stories – enough to be real, but not overly intense.
+
+// · Give genuine compliments – "I like how you think about that."
+
+// · Show curiosity – "I've never tried that! How did you get into it?"
+
+// · Express enjoyment – "I'm really glad we met up."
+
+// ❌ What You Shouldn't Say:
+
+// Avoid ex talk – Don't dive into your past relationships.
+
+// Don't overshare heavy topics – Illness, trauma, financial woes.
+
+// No interview mode – Don't rapid-fire questions like a job interview.
+
+// Don't brag or self-promote too much – Confidence ≠ arrogance.
+
+// Avoid controversial topics too early – Politics, religion, etc. unless mutually welcomed.
+
+// Want a cheat-sheet version to keep in your notes?`,
+//   promptToken: "what should",
+//   responseToken: `· Ask open-ended questions – "What's something you're passionate about lately?"
+
+// · Share light personal stories – enough to be real, but not overly intense.
+
+// · Give genuine compliments – "I like how you think about that."
+
+// · Show curiosity – "I've never tried that! How did you get into it?"
+
+// · Express enjoyment – "I'm really glad we met up."`,
+//   // Sketch content options:
+//   // - Text: "🤔 Processing..."
+//   // - Remote image: "image:https://example.com/image.png"
+//   // - Local image (put in /public folder): "/sketch.png"
+//   // - Uploaded image: handled via upload button
+//   sketchContent: `🤔 a good date should encourage:
+//   🙋
+//   👏
+//   📖
+//   🧐
+//   ♥️`,
+//   sketchSize: 1.5,
+// };
+
 const CONFIG = {
   prompt:
     "give me 5 bullet points of what should and shouldn't say on a first date",
@@ -9,53 +63,18 @@ const CONFIG = {
 
 ✅ What You Should Say:
 
-· Ask open-ended questions – "What's something you're passionate about lately?"
-
-· Share light personal stories – enough to be real, but not overly intense.
-
-· Give genuine compliments – "I like how you think about that."
-
-· Show curiosity – "I've never tried that! How did you get into it?"
-
-· Express enjoyment – "I'm really glad we met up."
+Ask open-ended questions – "What's something you're passionate about lately?" Share light personal stories – enough to be real, but not overly intense. Give genuine compliments – "I like how you think about that." Show curiosity – "I've never tried that! How did you get into it?" Express enjoyment – "I'm really glad we met up."
 
 ❌ What You Shouldn't Say:
 
-Avoid ex talk – Don't dive into your past relationships.
+Avoid ex talk – Don't dive into your past relationships. Don't overshare heavy topics – Illness, trauma, financial woes. No interview mode – Don't rapid-fire questions like a job interview. Don't brag or self-promote too much – Confidence ≠ arrogance. Avoid controversial topics too early – Politics, religion, etc. unless mutually welcomed.`,
 
-Don't overshare heavy topics – Illness, trauma, financial woes.
-
-No interview mode – Don't rapid-fire questions like a job interview.
-
-Don't brag or self-promote too much – Confidence ≠ arrogance.
-
-Avoid controversial topics too early – Politics, religion, etc. unless mutually welcomed.
-
-Want a cheat-sheet version to keep in your notes?`,
   promptToken: "what should",
-  responseToken: `· Ask open-ended questions – "What's something you're passionate about lately?"
+  responseToken: `Share light personal stories – enough to be real`,
 
-· Share light personal stories – enough to be real, but not overly intense.
-
-· Give genuine compliments – "I like how you think about that."
-
-· Show curiosity – "I've never tried that! How did you get into it?"
-
-· Express enjoyment – "I'm really glad we met up."`,
-  // Sketch content options:
-  // - Text: "🤔 Processing..."
-  // - Remote image: "image:https://example.com/image.png"
-  // - Local image (put in /public folder): "/sketch.png"
-  // - Uploaded image: handled via upload button
-  sketchContent: `🤔 a good date should encourage: 
-  🙋
-  👏 
-  📖 
-  🧐 
-  ♥️`,
+  sketchContent: `🤔 thinking......`,
   sketchSize: 1.5,
 };
-
 function App() {
   // State for token configuration
   const [promptToken, setPromptToken] = useState(CONFIG.promptToken);
