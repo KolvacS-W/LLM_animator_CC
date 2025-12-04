@@ -880,26 +880,26 @@ function App() {
           //   hasDiff ? 1200 : 600
           // );
 
-          // setTimeout(
-          //   () => {
-          //     setGhostStyle((prev) => ({
-          //       ...prev,
-          //       opacity: 0,
-          //       transition: `${prev.transition || ""}, opacity 0.4s ease`,
-          //     }));
-          //     // Let response text fade in while ghost fades out
-          //     setTimeout(() => {
-          //       setIsAnimating(false);
-          //     }, 150);
-          //     setTimeout(() => {
-          //       setAnimationPhase("idle");
-          //       setGhostStyle({});
-          //       setGhostContent(null);
-          //       setSketchAnimClass("");
-          //     }, 400);
-          //   },
-          //   hasDiff ? 3200 : 2600
-          // );
+          setTimeout(
+            () => {
+              setGhostStyle((prev) => ({
+                ...prev,
+                opacity: 0,
+                transition: `${prev.transition || ""}, opacity 0.4s ease`,
+              }));
+              // Let response text fade in while ghost fades out
+              setTimeout(() => {
+                setIsAnimating(false);
+              }, 150);
+              setTimeout(() => {
+                setAnimationPhase("idle");
+                setGhostStyle({});
+                setGhostContent(null);
+                setSketchAnimClass("");
+              }, 400);
+            },
+            hasDiff ? 3200 : 2600
+          );
         }, 1200);
       }, 100);
     }, 500);

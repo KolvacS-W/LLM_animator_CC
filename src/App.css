@@ -375,7 +375,10 @@
 /* Diff animation: keep common text steady while the different part swaps */
 .diff-token {
   color: #c5c6d0;
-  font-weight: 500;
+  font-weight: 600;
+  background-color: rgba(142, 142, 160, 0.2);
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 .diff-token-holder {
