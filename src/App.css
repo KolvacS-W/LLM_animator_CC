@@ -388,6 +388,19 @@
   line-height: inherit;
 }
 
+.final-token {
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.final-token-plain {
+  background-color: transparent !important;
+}
+
+.final-token-transition {
+  transition: color 1s ease-out, background-color 1s ease-out;
+}
+
 .diff-wrapper {
   display: inline;
 }

@@ -594,23 +594,31 @@ function App() {
             }, 900);
           }, 3200); // Wait for shrink animation to complete (2700 + 500ms transition)
 
-          // Clean up after animation completes with fade-out
+          // Clean up after animation completes with blur/fade-out
           setTimeout(() => {
-            setGhostStyle((prev) => ({
-              ...prev,
-              opacity: 0,
-              transition: `${prev.transition || ""}, opacity 0.4s ease`,
-            }));
-            // Let response text fade in while ghost fades out
+            setGhostStyle((prev) => {
+              const extraTransition =
+                "opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease";
+              return {
+                ...prev,
+                opacity: 0,
+                filter: "blur(6px)",
+                transform: `${prev.transform || "none"} scale(0.985)`,
+                transition: prev.transition
+                  ? `${prev.transition}, ${extraTransition}`
+                  : extraTransition,
+              };
+            });
+            // Let response text fade in while ghost blurs/fades out
             setTimeout(() => {
               setIsAnimating(false);
-            }, 150);
+            }, 250);
             setTimeout(() => {
               setAnimationPhase("idle");
               setGhostStyle({});
               setGhostContent(null);
               setSketchAnimClass("");
-            }, 400);
+            }, 650);
           }, 6100); // Adjusted for new timing (3200 + ~2900ms for expand phase)
         }, 1200); // Wait for move animation to complete
       }, 100);
@@ -825,78 +833,63 @@ function App() {
             );
           }, diffStartDelay + swapDuration + 500);
 
-          // setTimeout(
-          //   () => {
-          //     setAnimationPhase("expand");
-          //     setGhostContent(
-          //       <>
-          //         <span className="expand-text-invisible">{beforeToken}</span>
-          //         <span className="expand-token-growing">{responseToken}</span>
-          //         <span className="expand-text-invisible">{afterToken}</span>
-          //       </>
-          //     );
-
-          //     setGhostStyle({
-          //       position: "fixed",
-          //       left: expandContainerRect.left,
-          //       top: expandContainerRect.top,
-          //       width: expandContainerRect.width,
-          //       maxWidth: expandContainerRect.width,
-          //       fontSize: window.getComputedStyle(responseTokenRef.current)
-          //         .fontSize,
-          //       fontWeight: "normal",
-          //       color: "#ececf1",
-          //       opacity: 1,
-          //       transform: "none",
-          //       transition: "none",
-          //       pointerEvents: "none",
-          //       zIndex: 1000,
-          //       backgroundColor: "transparent",
-          //       padding: "0",
-          //       borderRadius: "0",
-          //       lineHeight: "1.7",
-          //     });
-
-          //     setTimeout(() => {
-          //       setGhostContent(
-          //         <>
-          //           <span className="expand-text-invisible">{beforeToken}</span>
-          //           <span className="expand-token-grown">{responseToken}</span>
-          //           <span className="expand-text-invisible">{afterToken}</span>
-          //         </>
-          //       );
-          //     }, 50);
-
-          //     setTimeout(() => {
-          //       setGhostContent(
-          //         <>
-          //           <span className="expand-text-revealing">{beforeToken}</span>
-          //           <span className="expand-token-grown">{responseToken}</span>
-          //           <span className="expand-text-revealing">{afterToken}</span>
-          //         </>
-          //       );
-          //     }, 900);
-          //   },
-          //   hasDiff ? 1200 : 600
-          // );
-
           setTimeout(
             () => {
-              setGhostStyle((prev) => ({
-                ...prev,
-                opacity: 0,
-                transition: `${prev.transition || ""}, opacity 0.4s ease`,
-              }));
-              // Let response text fade in while ghost fades out
+              const fadeDuration = 1600; // match expand-text-revealing timing
+              const renderFinalToken = (
+                tokenColor,
+                tokenBg,
+                extraClass = ""
+              ) => (
+                <>
+                  <span className="expand-text-revealing">{beforeToken}</span>
+                  <span
+                    className={`final-token final-token-transition ${extraClass}`}
+                    style={{ color: tokenColor, backgroundColor: tokenBg }}
+                  >
+                    {responseToken}
+                  </span>
+                  <span className="expand-text-revealing">{afterToken}</span>
+                </>
+              );
+
+              // Fade out the highlighted token/background
+              setGhostContent(
+                renderFinalToken("#c5c6d0", "rgba(142, 142, 160, 0.2)")
+              );
+              setTimeout(() => {
+                setGhostContent(renderFinalToken("transparent", "transparent"));
+              }, 40);
+
+              // Fade in a plain response token (no background)
+              // setTimeout(() => {
+              //   setGhostContent(
+              //     renderFinalToken(
+              //       "transparent",
+              //       "transparent",
+              //       "final-token-plain"
+              //     )
+              //   );
+              //   setTimeout(() => {
+              //     setGhostContent(
+              //       renderFinalToken(
+              //         "#ececf1",
+              //         "transparent",
+              //         "final-token-plain"
+              //       )
+              //     );
+              //   }, 40);
+              // }, fadeDuration + 120);
+
               setTimeout(() => {
                 setIsAnimating(false);
-              }, 150);
+              }, 0);
               setTimeout(() => {
                 setAnimationPhase("idle");
                 setGhostStyle({});
                 setGhostContent(null);
                 setSketchAnimClass("");
-              }, 400);
+              }, fadeDuration * 2 + 200);
             },
             hasDiff ? 3200 : 2600
           );
