@@ -52,7 +52,8 @@
   font-weight: 500;
 }
 
-.control-group input {
+.control-group input,
+.control-group select {
   padding: 10px 14px;
   border: 1px solid #565869;
   border-radius: 8px;
@@ -63,13 +64,15 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.control-group input:focus {
+.control-group input:focus,
+.control-group select:focus {
   outline: none;
   border-color: #10a37f;
   box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.2);
 }
 
-.control-group input:disabled {
+.control-group input:disabled,
+.control-group select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -299,7 +302,7 @@
 /* Sketch phase animations */
 .sketch-token {
   display: inline;
-  color: #10a37f;
+  color: #c5c6d0;
   font-weight: 600;
   font-size: 8rem;
   transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -320,7 +323,7 @@
 /* Sketch text content */
 .sketch-text {
   display: inline-block; /* inline-block to properly handle multiline content */
-  color: #10a37f;
+  color: #c5c6d0;
   font-weight: 500;
   white-space: pre-line; /* Preserve newlines like ghost-token */
   transition: font-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -366,6 +369,53 @@
   color: #10a37f;
   font-weight: 600;
   transition: font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Diff animation: keep common text steady while the different part swaps */
+.diff-token {
+  color: #c5c6d0;
+  font-weight: 600;
+}
+
+.diff-common {
+  color: #ececf1;
+  font-weight: 500;
+}
+
+.diff-from,
+.diff-to {
+  display: inline-block;
+  transition: font-size 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease;
+  padding: 1px 3px;
+  border-radius: 4px;
+}
+
+.diff-from-normal {
+  font-size: inherit;
+  opacity: 1;
+  color: #f4dce3;
+  background-color: rgba(255, 99, 132, 0.25);
+}
+
+.diff-from-shrinking {
+  font-size: 0;
+  opacity: 0;
+  color: #f4dce3;
+  background-color: rgba(255, 99, 132, 0.25);
+}
+
+.diff-to-collapsed {
+  font-size: 0;
+  opacity: 0;
+  color: #d7f2d2;
+  background-color: rgba(76, 175, 80, 0.22);
+}
+
+.diff-to-growing {
+  font-size: inherit;
+  opacity: 1;
+  color: #d7f2d2;
+  background-color: rgba(76, 175, 80, 0.22);
 }
 
 /* Initial state: promptToken at normal size */
@@ -420,9 +470,9 @@
 
 /* The token in expand phase */
 .expand-token {
-  color: #10a37f;
+  color: #c5c6d0;
   font-weight: 600;
-  background-color: rgba(16, 163, 127, 0.15);
+  background-color: rgba(142, 142, 160, 0.2);
   padding: 2px 4px;
   border-radius: 4px;
 }
@@ -450,9 +500,9 @@
 .expand-token-growing {
   display: inline;
   font-size: 0;
-  color: #10a37f;
+  color: #c5c6d0;
   font-weight: 600;
-  background-color: rgba(16, 163, 127, 0.15);
+  background-color: rgba(142, 142, 160, 0.2);
   padding: 2px 4px;
   border-radius: 4px;
   transition: font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -462,9 +512,9 @@
 .expand-token-grown {
   display: inline;
   font-size: inherit;
-  color: #10a37f;
+  color: #c5c6d0;
   font-weight: 600;
-  background-color: rgba(16, 163, 127, 0.15);
+  background-color: rgba(142, 142, 160, 0.2);
   padding: 2px 4px;
   border-radius: 4px;
   transition: font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1);

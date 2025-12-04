@@ -58,19 +58,13 @@ import "./App.css";
 
 const CONFIG = {
   prompt:
-    "give me 5 bullet points of what should and shouldn't say on a first date",
-  response: `Sure! Here are 5 quick dos and don'ts for what to say on a first date:
+    "Do small proofread for this text to make it more professional: I'm sorry and understand that the current policy is not optimistic for funding, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I think I will be able to fund myself for one year or two.",
+  response: `Here's a more professionally worded version:
+I apologize and acknowledge that the current funding landscape appears challenging, particularly in specific research domains. Regarding external fellowships, could you clarify if the school imposes any restrictions on the source or format of external funding? If no such limitations exist, I am prepared to self-fund my research for one to two years.`,
 
-✅ What You Should Say:
-
-Ask open-ended questions – "What's something you're passionate about lately?" Share light personal stories – enough to be real, but not overly intense. Give genuine compliments – "I like how you think about that." Show curiosity – "I've never tried that! How did you get into it?" Express enjoyment – "I'm really glad we met up."
-
-❌ What You Shouldn't Say:
-
-Avoid ex talk – Don't dive into your past relationships. Don't overshare heavy topics – Illness, trauma, financial woes. No interview mode – Don't rapid-fire questions like a job interview. Don't brag or self-promote too much – Confidence ≠ arrogance. Avoid controversial topics too early – Politics, religion, etc. unless mutually welcomed.`,
-
-  promptToken: "what should",
-  responseToken: `Share light personal stories – enough to be real`,
+  promptToken:
+    "I'm sorry and understand that the current policy is not optimistic for funding, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I think I will be able to fund myself for one year or two.",
+  responseToken: `I apologize and acknowledge that the current funding landscape appears challenging, particularly in specific research domains. Regarding external fellowships, could you clarify if the school imposes any restrictions on the source or format of external funding? If no such limitations exist, I am prepared to self-fund my research for one to two years.`,
 
   sketchContent: `🤔 thinking......`,
   sketchSize: 1.5,
@@ -83,6 +77,7 @@ function App() {
   const [responseText] = useState(CONFIG.response);
   const [sketchContent, setSketchContent] = useState(CONFIG.sketchContent);
   const [sketchSize, setSketchSize] = useState(CONFIG.sketchSize);
+  const [animationMode, setAnimationMode] = useState("diff");
 
   // Animation state
   const [isAnimating, setIsAnimating] = useState(false);
@@ -90,6 +85,9 @@ function App() {
   const [ghostStyle, setGhostStyle] = useState({});
   const [ghostContent, setGhostContent] = useState(null); // Can be string or React element
   const [sketchAnimClass, setSketchAnimClass] = useState(""); // Controls sketch grow/shrink animation
+
+  const GHOST_COLOR = "#c5c6d0";
+  const GHOST_BG = "rgba(142, 142, 160, 0.2)";
 
   // Refs for DOM elements
   const promptTokenRef = useRef(null);
@@ -141,7 +139,7 @@ function App() {
             top: promptRect.top,
           }));
         }
-      } else if (animationPhase === "sketch") {
+      } else if (animationPhase === "sketch" || animationPhase === "diff") {
         // During sketch, ghost is at response position (has transform from move)
         // Update left/top to follow prompt position
         if (promptTokenRef.current) {
@@ -207,8 +205,83 @@ function App() {
     );
   }, []);
 
-  // Main animation function
-  const runAnimation = useCallback(() => {
+  const diffSegments = useCallback((fromToken, toToken) => {
+    const buildGroupedDiff = (a, b) => {
+      const n = a.length;
+      const m = b.length;
+      const dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+
+      for (let i = 1; i <= n; i += 1) {
+        for (let j = 1; j <= m; j += 1) {
+          if (a[i - 1] === b[j - 1]) {
+            dp[i][j] = dp[i - 1][j - 1] + 1;
+          } else {
+            dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+          }
+        }
+      }
+
+      const segments = [];
+      let i = n;
+      let j = m;
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+          segments.push({ type: "same", value: a[i - 1] });
+          i -= 1;
+          j -= 1;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+          segments.push({ type: "add", value: b[j - 1] });
+          j -= 1;
+        } else {
+          segments.push({ type: "del", value: a[i - 1] });
+          i -= 1;
+        }
+      }
+
+      segments.reverse();
+
+      const grouped = [];
+      for (const seg of segments) {
+        const last = grouped[grouped.length - 1];
+        if (last && last.type === seg.type) {
+          last.value += seg.value;
+        } else {
+          grouped.push({ ...seg });
+        }
+      }
+      return grouped;
+    };
+
+    // If both strings are a single word (optionally wrapped with matching punctuation/spacing), diff at character level
+    const wordMatch = (str = "") => str.match(/^(\W*)(\w+)(\W*)$/);
+    const fromMatch = wordMatch(fromToken || "");
+    const toMatch = wordMatch(toToken || "");
+    const canCharDiff =
+      fromMatch &&
+      toMatch &&
+      fromMatch[1] === toMatch[1] &&
+      fromMatch[3] === toMatch[3];
+
+    if (canCharDiff) {
+      const prefix = fromMatch[1];
+      const suffix = fromMatch[3];
+      const coreDiff = buildGroupedDiff(
+        fromMatch[2].split("") || [],
+        toMatch[2].split("") || []
+      );
+      const result = [];
+      if (prefix) result.push({ type: "same", value: prefix });
+      result.push(...coreDiff);
+      if (suffix) result.push({ type: "same", value: suffix });
+      return result;
+    }
+
+    // Fallback: word-aware diff to avoid mid-word splits
+    const tokenize = (str) => str.match(/\w+|\s+|[^\w\s]+/g) || [];
+    return buildGroupedDiff(tokenize(fromToken || ""), tokenize(toToken || ""));
+  }, []);
+
+  const runLocalAnimation = useCallback(() => {
     if (isAnimating) return;
 
     setIsAnimating(true);
@@ -241,13 +314,13 @@ function App() {
         maxWidth: availableWidth,
         fontSize: window.getComputedStyle(promptTokenRef.current).fontSize,
         fontWeight: "600",
-        color: "#10a37f",
+        color: GHOST_COLOR,
         opacity: 1,
         transform: "scale(1)",
         transition: "none",
         pointerEvents: "none",
         zIndex: 1000,
-        backgroundColor: "rgba(16, 163, 127, 0.15)",
+        backgroundColor: GHOST_BG,
         padding: "2px 4px",
         borderRadius: "4px",
       });
@@ -304,8 +377,8 @@ function App() {
           );
           setGhostStyle((prev) => ({
             ...prev,
-            color: "#10a37f",
-            backgroundColor: "rgba(16, 163, 127, 0.15)",
+            color: GHOST_COLOR,
+            backgroundColor: GHOST_BG,
             transition: "none",
           }));
 
@@ -419,6 +492,218 @@ function App() {
     sketchSize,
   ]);
 
+  const runDiffAnimation = useCallback(() => {
+    if (isAnimating) return;
+
+    setIsAnimating(true);
+    setAnimationPhase("highlight");
+
+    setTimeout(() => {
+      if (
+        !promptTokenRef.current ||
+        !responseTokenRef.current ||
+        !responseContainerRef.current
+      ) {
+        setIsAnimating(false);
+        setAnimationPhase("idle");
+        return;
+      }
+
+      const promptRect = promptTokenRef.current.getBoundingClientRect();
+      const containerRect =
+        responseContainerRef.current.getBoundingClientRect();
+      const availableWidth = containerRect.right - promptRect.left;
+
+      setGhostContent(promptToken);
+      setGhostStyle({
+        position: "fixed",
+        left: promptRect.left,
+        top: promptRect.top,
+        maxWidth: availableWidth,
+        fontSize: window.getComputedStyle(promptTokenRef.current).fontSize,
+        fontWeight: "600",
+        color: GHOST_COLOR,
+        opacity: 1,
+        transform: "scale(1)",
+        transition: "none",
+        pointerEvents: "none",
+        zIndex: 1000,
+        backgroundColor: GHOST_BG,
+        padding: "2px 4px",
+        borderRadius: "4px",
+      });
+
+      setAnimationPhase("move");
+
+      setTimeout(() => {
+        const currentPromptRect =
+          promptTokenRef.current.getBoundingClientRect();
+        const currentResponseRect =
+          responseTokenRef.current.getBoundingClientRect();
+        const currentContainerRect =
+          responseContainerRef.current.getBoundingClientRect();
+        const deltaX = currentResponseRect.left - currentPromptRect.left;
+        const deltaY = currentResponseRect.top - currentPromptRect.top;
+        const responseMaxWidth =
+          currentContainerRect.right - currentResponseRect.left;
+
+        setGhostStyle((prev) => ({
+          ...prev,
+          transform: `translate(${deltaX}px, ${deltaY}px) scale(1)`,
+          maxWidth: responseMaxWidth,
+          opacity: 1,
+          color: "transparent",
+          transition:
+            "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s ease-in-out, color 1.2s ease-in-out, max-width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+        }));
+
+        setTimeout(() => {
+          setAnimationPhase("diff");
+          const expandContainerRect =
+            responseContainerRef.current.getBoundingClientRect();
+          const tokenIndex = responseText.indexOf(responseToken);
+          const beforeToken = responseText.slice(0, tokenIndex);
+          const afterToken = responseText.slice(
+            tokenIndex + responseToken.length
+          );
+          const groupedSegments = diffSegments(promptToken, responseToken);
+          const hasDiff = groupedSegments.some(
+            (seg) => seg.type === "add" || seg.type === "del"
+          );
+
+          const renderDiffState = (phase) => (
+            <span className="diff-token">
+              {groupedSegments.map((seg, idx) => {
+                if (seg.type === "same") {
+                  return (
+                    <span key={`${idx}-same`} className="diff-common">
+                      {seg.value}
+                    </span>
+                  );
+                }
+
+                if (seg.type === "del") {
+                  return (
+                    <span
+                      key={`${idx}-del`}
+                      className={`diff-from ${
+                        phase === "swap"
+                          ? "diff-from-shrinking"
+                          : "diff-from-normal"
+                      }`}
+                    >
+                      {seg.value}
+                    </span>
+                  );
+                }
+
+                return (
+                  <span
+                    key={`${idx}-add`}
+                    className={`diff-to ${
+                      phase === "swap" ? "diff-to-growing" : "diff-to-collapsed"
+                    }`}
+                  >
+                    {seg.value}
+                  </span>
+                );
+              })}
+            </span>
+          );
+
+          setGhostContent(renderDiffState("static"));
+          setGhostStyle((prev) => ({
+            ...prev,
+            color: GHOST_COLOR,
+            backgroundColor: GHOST_BG,
+            transition: "none",
+          }));
+
+          setTimeout(() => {
+            if (hasDiff) {
+              setGhostContent(renderDiffState("swap"));
+            }
+          }, 80);
+
+          // setTimeout(
+          //   () => {
+          //     setAnimationPhase("expand");
+          //     setGhostContent(
+          //       <>
+          //         <span className="expand-text-invisible">{beforeToken}</span>
+          //         <span className="expand-token-growing">{responseToken}</span>
+          //         <span className="expand-text-invisible">{afterToken}</span>
+          //       </>
+          //     );
+
+          //     setGhostStyle({
+          //       position: "fixed",
+          //       left: expandContainerRect.left,
+          //       top: expandContainerRect.top,
+          //       width: expandContainerRect.width,
+          //       maxWidth: expandContainerRect.width,
+          //       fontSize: window.getComputedStyle(responseTokenRef.current)
+          //         .fontSize,
+          //       fontWeight: "normal",
+          //       color: "#ececf1",
+          //       opacity: 1,
+          //       transform: "none",
+          //       transition: "none",
+          //       pointerEvents: "none",
+          //       zIndex: 1000,
+          //       backgroundColor: "transparent",
+          //       padding: "0",
+          //       borderRadius: "0",
+          //       lineHeight: "1.7",
+          //     });
+
+          //     setTimeout(() => {
+          //       setGhostContent(
+          //         <>
+          //           <span className="expand-text-invisible">{beforeToken}</span>
+          //           <span className="expand-token-grown">{responseToken}</span>
+          //           <span className="expand-text-invisible">{afterToken}</span>
+          //         </>
+          //       );
+          //     }, 50);
+
+          //     setTimeout(() => {
+          //       setGhostContent(
+          //         <>
+          //           <span className="expand-text-revealing">{beforeToken}</span>
+          //           <span className="expand-token-grown">{responseToken}</span>
+          //           <span className="expand-text-revealing">{afterToken}</span>
+          //         </>
+          //       );
+          //     }, 900);
+          //   },
+          //   hasDiff ? 1200 : 600
+          // );
+
+          setTimeout(
+            () => {
+              setIsAnimating(false);
+              setAnimationPhase("idle");
+              setGhostStyle({});
+              setGhostContent(null);
+              setSketchAnimClass("");
+            },
+            hasDiff ? 3200 : 2600
+          );
+        }, 1200);
+      }, 100);
+    }, 500);
+  }, [diffSegments, isAnimating, promptToken, responseToken, responseText]);
+
+  // Main animation function
+  const runAnimation = useCallback(() => {
+    if (animationMode === "local") {
+      runLocalAnimation();
+    } else {
+      runDiffAnimation();
+    }
+  }, [animationMode, runDiffAnimation, runLocalAnimation]);
+
   // Determine which tokens should be highlighted based on animation phase
   const isPromptHighlighted =
     animationPhase === "highlight" || animationPhase === "move";
@@ -455,6 +740,19 @@ function App() {
             disabled={isAnimating}
           />
         </div>
+        <div className="control-group">
+          <label htmlFor="animationMode">Animation Method:</label>
+          <select
+            id="animationMode"
+            value={animationMode}
+            onChange={(e) => setAnimationMode(e.target.value)}
+            disabled={isAnimating}
+          >
+            <option value="local">Local</option>
+            <option value="diff">Diff</option>
+          </select>
+        </div>
+
         <div className="control-group sketch-control">
           <label htmlFor="sketchContent">Sketch Content:</label>
           <div className="sketch-input-row">
@@ -467,7 +765,11 @@ function App() {
                   : sketchContent
               }
               onChange={(e) => setSketchContent(e.target.value)}
-              disabled={isAnimating || sketchContent.startsWith("data:image")}
+              disabled={
+                isAnimating ||
+                animationMode === "diff" ||
+                sketchContent.startsWith("data:image")
+              }
               placeholder="Text, /local.png, or image:URL"
             />
             <input
@@ -475,14 +777,14 @@ function App() {
               type="file"
               accept="image/*"
               onChange={handleImageUpload}
-              disabled={isAnimating}
+              disabled={isAnimating || animationMode === "diff"}
               style={{ display: "none" }}
             />
             <button
               type="button"
               className="upload-btn"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isAnimating}
+              disabled={isAnimating || animationMode === "diff"}
               title="Upload image"
             >
               Upload
@@ -494,7 +796,7 @@ function App() {
                 type="button"
                 className="clear-btn"
                 onClick={() => setSketchContent(CONFIG.sketchContent)}
-                disabled={isAnimating}
+                disabled={isAnimating || animationMode === "diff"}
                 title="Clear image"
               >
                 Clear
@@ -512,7 +814,7 @@ function App() {
             step="0.5"
             value={sketchSize}
             onChange={(e) => setSketchSize(parseFloat(e.target.value))}
-            disabled={isAnimating}
+            disabled={isAnimating || animationMode === "diff"}
           />
         </div>
         <button
@@ -520,7 +822,9 @@ function App() {
           onClick={runAnimation}
           disabled={isAnimating}
         >
-          {isAnimating ? "Animating..." : "Run Animation"}
+          {isAnimating
+            ? "Animating..."
+            : `Run ${animationMode === "local" ? "Local" : "Diff"} Animation`}
         </button>
       </div>
 
