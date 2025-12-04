@@ -61,7 +61,9 @@ const CONFIG = {
     "Do small proofread for this text to make it more professional: I'm sorry and understand that the current policy is not optimistic for funding, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I think I will be able to fund myself for one year or two.",
   //   response: `Here's a more professionally worded version:
   // I apologize and acknowledge that the current funding landscape appears challenging, particularly in specific research domains. Regarding external fellowships, could you clarify if the school imposes any restrictions on the source or format of external funding? If no such limitations exist, I am prepared to self-fund my research for one to two years.`,
-  response: `Here's a more professionally worded version: I'm so sorry I understand that the current situation is not optimistic for fundings, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I will be able to fund myself for one year or two, thanks`,
+  response: `Here's a more professionally worded version: 
+  
+  I'm so sorry I understand that the current situation is not optimistic for fundings, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I will be able to fund myself for one year or two, thanks. Hope you like the result!`,
 
   promptToken:
     "I'm sorry and understand that the current policy is not optimistic for funding, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I think I will be able to fund myself for one year or two.",
@@ -677,7 +679,6 @@ function App() {
         }));
 
         setTimeout(() => {
-          setAnimationPhase("diff");
           const expandContainerRect =
             responseContainerRef.current.getBoundingClientRect();
           const tokenIndex = responseText.indexOf(responseToken);
@@ -780,7 +781,13 @@ function App() {
             </span>
           );
 
+          // Start diff only after scaffold growth completes
+          const scaffoldGrowDuration = 600;
+          const scaffoldSwapDelay = 120;
+          const diffStartDelay = scaffoldSwapDelay + scaffoldGrowDuration + 50;
+
           setTimeout(() => {
+            setAnimationPhase("diff");
             setGhostContent(renderDiffState("static"));
             setGhostStyle((prev) => ({
               ...prev,
@@ -788,13 +795,13 @@ function App() {
               backgroundColor: GHOST_BG,
               transition: "none",
             }));
-          }, 240);
+          }, diffStartDelay);
 
           setTimeout(() => {
             if (hasDiff) {
               setGhostContent(renderDiffState("swap"));
             }
-          }, 380);
+          }, diffStartDelay + 160);
 
           // setTimeout(
           //   () => {
