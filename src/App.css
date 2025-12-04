@@ -377,6 +377,30 @@
   font-weight: 600;
 }
 
+.diff-wrapper {
+  display: inline;
+}
+
+.diff-context-invisible {
+  color: transparent;
+}
+
+.full-text-growing {
+  color: transparent;
+  font-size: 0;
+  transition: font-size 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.full-text-grown {
+  color: transparent;
+  font-size: inherit;
+  transition: font-size 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.diff-token-placeholder {
+  color: #c5c6d0;
+}
+
 .diff-common {
   color: #ececf1;
   font-weight: 500;

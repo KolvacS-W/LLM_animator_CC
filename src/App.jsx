@@ -661,14 +661,11 @@ function App() {
       setTimeout(() => {
         const currentPromptRect =
           promptTokenRef.current.getBoundingClientRect();
-        const currentResponseRect =
-          responseTokenRef.current.getBoundingClientRect();
         const currentContainerRect =
           responseContainerRef.current.getBoundingClientRect();
-        const deltaX = currentResponseRect.left - currentPromptRect.left;
-        const deltaY = currentResponseRect.top - currentPromptRect.top;
-        const responseMaxWidth =
-          currentContainerRect.right - currentResponseRect.left;
+        const deltaX = currentContainerRect.left - currentPromptRect.left;
+        const deltaY = currentContainerRect.top - currentPromptRect.top;
+        const responseMaxWidth = currentContainerRect.width;
 
         setGhostStyle((prev) => ({
           ...prev,
@@ -694,59 +691,111 @@ function App() {
             (seg) => seg.type === "add" || seg.type === "del"
           );
 
-          const renderDiffState = (phase) => (
-            <span className="diff-token">
-              {groupedSegments.map((seg, idx) => {
-                if (seg.type === "same") {
-                  return (
-                    <span key={`${idx}-same`} className="diff-common">
-                      {seg.value}
-                    </span>
-                  );
-                }
+          // Align to container and show full text scaffold before diff
+          setGhostStyle({
+            position: "fixed",
+            left: expandContainerRect.left,
+            top: expandContainerRect.top,
+            width: expandContainerRect.width,
+            maxWidth: expandContainerRect.width,
+            fontSize: window.getComputedStyle(responseTokenRef.current)
+              .fontSize,
+            fontWeight: "normal",
+            color: GHOST_COLOR,
+            opacity: 1,
+            transform: "none",
+            transition: "none",
+            pointerEvents: "none",
+            zIndex: 1000,
+            backgroundColor: "transparent",
+            padding: "0",
+            borderRadius: "0",
+            lineHeight: "1.7",
+          });
 
-                if (seg.type === "del") {
+          setGhostContent(
+            <span className="diff-wrapper">
+              <span className="full-text-growing">{beforeToken}</span>
+              <span className="diff-token diff-token-placeholder">
+                {responseToken}
+              </span>
+              <span className="full-text-growing">{afterToken}</span>
+            </span>
+          );
+
+          setTimeout(() => {
+            setGhostContent(
+              <span className="diff-wrapper">
+                <span className="full-text-grown">{beforeToken}</span>
+                <span className="diff-token diff-token-placeholder">
+                  {responseToken}
+                </span>
+                <span className="full-text-grown">{afterToken}</span>
+              </span>
+            );
+          }, 120);
+
+          const renderDiffState = (phase) => (
+            <span className="diff-wrapper">
+              <span className="diff-context-invisible">{beforeToken}</span>
+              <span className="diff-token">
+                {groupedSegments.map((seg, idx) => {
+                  if (seg.type === "same") {
+                    return (
+                      <span key={`${idx}-same`} className="diff-common">
+                        {seg.value}
+                      </span>
+                    );
+                  }
+
+                  if (seg.type === "del") {
+                    return (
+                      <span
+                        key={`${idx}-del`}
+                        className={`diff-from ${
+                          phase === "swap"
+                            ? "diff-from-shrinking"
+                            : "diff-from-normal"
+                        }`}
+                      >
+                        {seg.value}
+                      </span>
+                    );
+                  }
+
                   return (
                     <span
-                      key={`${idx}-del`}
-                      className={`diff-from ${
+                      key={`${idx}-add`}
+                      className={`diff-to ${
                         phase === "swap"
-                          ? "diff-from-shrinking"
-                          : "diff-from-normal"
+                          ? "diff-to-growing"
+                          : "diff-to-collapsed"
                       }`}
                     >
                       {seg.value}
                     </span>
                   );
-                }
-
-                return (
-                  <span
-                    key={`${idx}-add`}
-                    className={`diff-to ${
-                      phase === "swap" ? "diff-to-growing" : "diff-to-collapsed"
-                    }`}
-                  >
-                    {seg.value}
-                  </span>
-                );
-              })}
+                })}
+              </span>
+              <span className="diff-context-invisible">{afterToken}</span>
             </span>
           );
 
-          setGhostContent(renderDiffState("static"));
-          setGhostStyle((prev) => ({
-            ...prev,
-            color: GHOST_COLOR,
-            backgroundColor: GHOST_BG,
-            transition: "none",
-          }));
+          setTimeout(() => {
+            setGhostContent(renderDiffState("static"));
+            setGhostStyle((prev) => ({
+              ...prev,
+              color: GHOST_COLOR,
+              backgroundColor: GHOST_BG,
+              transition: "none",
+            }));
+          }, 240);
 
           setTimeout(() => {
             if (hasDiff) {
               setGhostContent(renderDiffState("swap"));
             }
-          }, 80);
+          }, 380);
 
           // setTimeout(
           //   () => {
