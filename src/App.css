@@ -374,7 +374,7 @@
 /* Diff animation: keep common text steady while the different part swaps */
 .diff-token {
   color: #c5c6d0;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .diff-wrapper {
@@ -386,13 +386,13 @@
 }
 
 .full-text-growing {
-  color: transparent;
+  color: #ececf1;
   font-size: 0;
   transition: font-size 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .full-text-grown {
-  color: transparent;
+  color: #ececf1;
   font-size: inherit;
   transition: font-size 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
