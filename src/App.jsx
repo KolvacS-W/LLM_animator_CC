@@ -59,12 +59,14 @@ import "./App.css";
 const CONFIG = {
   prompt:
     "Do small proofread for this text to make it more professional: I'm sorry and understand that the current policy is not optimistic for funding, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I think I will be able to fund myself for one year or two.",
+  //   response: `Here's a more professionally worded version:
+  // I apologize and acknowledge that the current funding landscape appears challenging, particularly in specific research domains. Regarding external fellowships, could you clarify if the school imposes any restrictions on the source or format of external funding? If no such limitations exist, I am prepared to self-fund my research for one to two years.`,
   response: `Here's a more professionally worded version:
-I apologize and acknowledge that the current funding landscape appears challenging, particularly in specific research domains. Regarding external fellowships, could you clarify if the school imposes any restrictions on the source or format of external funding? If no such limitations exist, I am prepared to self-fund my research for one to two years.`,
+I'm so sorry I understand that the current situation is not optimistic for fundings, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I will be able to fund myself for one year or two, thanks`,
 
   promptToken:
     "I'm sorry and understand that the current policy is not optimistic for funding, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I think I will be able to fund myself for one year or two.",
-  responseToken: `I apologize and acknowledge that the current funding landscape appears challenging, particularly in specific research domains. Regarding external fellowships, could you clarify if the school imposes any restrictions on the source or format of external funding? If no such limitations exist, I am prepared to self-fund my research for one to two years.`,
+  responseToken: `I'm so sorry I understand that the current situation is not optimistic for fundings, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I will be able to fund myself for one year or two, thanks`,
 
   sketchContent: `🤔 thinking......`,
   sketchSize: 1.5,
@@ -206,6 +208,16 @@ function App() {
   }, []);
 
   const diffSegments = useCallback((fromToken, toToken) => {
+    const debugLog = (label, data) => {
+      if (
+        (fromToken || "").includes("funding") ||
+        (toToken || "").includes("funding")
+      ) {
+        // eslint-disable-next-line no-console
+        console.log(`[diff-debug] ${label}`, data);
+      }
+    };
+
     const buildGroupedDiff = (a, b) => {
       const n = a.length;
       const m = b.length;
@@ -252,6 +264,73 @@ function App() {
       return grouped;
     };
 
+    const refineSubstitution = (segments) => {
+      const refined = [];
+      let idx = 0;
+      while (idx < segments.length) {
+        const current = segments[idx];
+        const next = segments[idx + 1];
+
+        if (current?.type === "del" && next?.type === "add") {
+          const delVal = current.value;
+          const addVal = next.value;
+          const prefixLen = (() => {
+            const max = Math.min(delVal.length, addVal.length);
+            let l = 0;
+            while (l < max && delVal.charAt(l) === addVal.charAt(l)) l += 1;
+            return l;
+          })();
+          const suffixLen = (() => {
+            const max = Math.min(
+              delVal.length - prefixLen,
+              addVal.length - prefixLen
+            );
+            let l = 0;
+            while (
+              l < max &&
+              delVal.charAt(delVal.length - 1 - l) ===
+                addVal.charAt(addVal.length - 1 - l)
+            ) {
+              l += 1;
+            }
+            return l;
+          })();
+
+          const commonPre = delVal.slice(0, prefixLen);
+          const commonSuf = suffixLen
+            ? delVal.slice(delVal.length - suffixLen)
+            : "";
+          const delMid = delVal.slice(prefixLen, delVal.length - suffixLen);
+          const addMid = addVal.slice(prefixLen, addVal.length - suffixLen);
+
+          // Only apply refinement if we found shared prefix/suffix (i.e., change is local)
+          if (commonPre || commonSuf) {
+            if (commonPre) refined.push({ type: "same", value: commonPre });
+            if (delMid) refined.push({ type: "del", value: delMid });
+            if (addMid) refined.push({ type: "add", value: addMid });
+            if (commonSuf) refined.push({ type: "same", value: commonSuf });
+            idx += 2;
+            continue;
+          }
+        }
+
+        refined.push(current);
+        idx += 1;
+      }
+
+      // Merge adjacent same-type entries after refinement
+      const merged = [];
+      for (const seg of refined) {
+        const last = merged[merged.length - 1];
+        if (last && last.type === seg.type) {
+          last.value += seg.value;
+        } else {
+          merged.push({ ...seg });
+        }
+      }
+      return merged;
+    };
+
     // If both strings are a single word (optionally wrapped with matching punctuation/spacing), diff at character level
     const wordMatch = (str = "") => str.match(/^(\W*)(\w+)(\W*)$/);
     const fromMatch = wordMatch(fromToken || "");
@@ -265,20 +344,64 @@ function App() {
     if (canCharDiff) {
       const prefix = fromMatch[1];
       const suffix = fromMatch[3];
-      const coreDiff = buildGroupedDiff(
-        fromMatch[2].split("") || [],
-        toMatch[2].split("") || []
-      );
+      const aCore = fromMatch[2] || "";
+      const bCore = toMatch[2] || "";
+
+      // Prefix/suffix diff so we don't break interior characters
+      let preLen = 0;
+      const maxPre = Math.min(aCore.length, bCore.length);
+      while (preLen < maxPre && aCore.charAt(preLen) === bCore.charAt(preLen)) {
+        preLen += 1;
+      }
+
+      let sufLen = 0;
+      const maxSuf = Math.min(aCore.length - preLen, bCore.length - preLen);
+      while (
+        sufLen < maxSuf &&
+        aCore.charAt(aCore.length - 1 - sufLen) ===
+          bCore.charAt(bCore.length - 1 - sufLen)
+      ) {
+        sufLen += 1;
+      }
+
+      const aMid = aCore.slice(preLen, aCore.length - sufLen);
+      const bMid = bCore.slice(preLen, bCore.length - sufLen);
+
       const result = [];
       if (prefix) result.push({ type: "same", value: prefix });
-      result.push(...coreDiff);
+      if (preLen) result.push({ type: "same", value: aCore.slice(0, preLen) });
+      if (aMid) result.push({ type: "del", value: aMid });
+      if (bMid) result.push({ type: "add", value: bMid });
+      if (sufLen)
+        result.push({
+          type: "same",
+          value: aCore.slice(aCore.length - sufLen),
+        });
       if (suffix) result.push({ type: "same", value: suffix });
-      return result;
+
+      const refined = refineSubstitution(result);
+      debugLog("char-diff", {
+        from: fromToken,
+        to: toToken,
+        preLen,
+        sufLen,
+        aMid,
+        bMid,
+        result,
+        refined,
+      });
+      return refined;
     }
 
     // Fallback: word-aware diff to avoid mid-word splits
     const tokenize = (str) => str.match(/\w+|\s+|[^\w\s]+/g) || [];
-    return buildGroupedDiff(tokenize(fromToken || ""), tokenize(toToken || ""));
+    const grouped = buildGroupedDiff(
+      tokenize(fromToken || ""),
+      tokenize(toToken || "")
+    );
+    const refined = refineSubstitution(grouped);
+    debugLog("word-diff", { from: fromToken, to: toToken, grouped, refined });
+    return refined;
   }, []);
 
   const runLocalAnimation = useCallback(() => {
