@@ -594,13 +594,23 @@ function App() {
             }, 900);
           }, 3200); // Wait for shrink animation to complete (2700 + 500ms transition)
 
-          // Clean up after animation completes
+          // Clean up after animation completes with fade-out
           setTimeout(() => {
-            setIsAnimating(false);
-            setAnimationPhase("idle");
-            setGhostStyle({});
-            setGhostContent(null);
-            setSketchAnimClass("");
+            setGhostStyle((prev) => ({
+              ...prev,
+              opacity: 0,
+              transition: `${prev.transition || ""}, opacity 0.4s ease`,
+            }));
+            // Let response text fade in while ghost fades out
+            setTimeout(() => {
+              setIsAnimating(false);
+            }, 150);
+            setTimeout(() => {
+              setAnimationPhase("idle");
+              setGhostStyle({});
+              setGhostContent(null);
+              setSketchAnimClass("");
+            }, 400);
           }, 6100); // Adjusted for new timing (3200 + ~2900ms for expand phase)
         }, 1200); // Wait for move animation to complete
       }, 100);
@@ -783,23 +793,37 @@ function App() {
           const scaffoldGrowDuration = 600;
           const scaffoldSwapDelay = 120;
           const diffStartDelay = scaffoldSwapDelay + scaffoldGrowDuration + 50;
+          const swapDuration = 600; // matches diff-from/diff-to transition
 
+          // Phase: diff static state (context hidden) after scaffold grows
           setTimeout(() => {
             setAnimationPhase("diff");
             setGhostContent(renderDiffState("static"));
             setGhostStyle((prev) => ({
               ...prev,
-              color: GHOST_COLOR,
-              backgroundColor: GHOST_BG,
+              color: "transparent", // avoid tinting before/after
+              backgroundColor: "transparent",
               transition: "none",
             }));
           }, diffStartDelay);
 
+          // Phase: perform diff swap
           setTimeout(() => {
             if (hasDiff) {
               setGhostContent(renderDiffState("swap"));
             }
-          }, diffStartDelay + 160);
+          }, diffStartDelay + 120);
+
+          // // Phase: reveal surrounding text smoothly only after swap is done
+          setTimeout(() => {
+            setGhostContent(
+              <>
+                <span className="expand-text-revealing">{beforeToken}</span>
+                <span className="expand-token-grown">{responseToken}</span>
+                <span className="expand-text-revealing">{afterToken}</span>
+              </>
+            );
+          }, diffStartDelay + swapDuration + 500);
 
           // setTimeout(
           //   () => {
@@ -856,16 +880,26 @@ function App() {
           //   hasDiff ? 1200 : 600
           // );
 
-          setTimeout(
-            () => {
-              setIsAnimating(false);
-              setAnimationPhase("idle");
-              setGhostStyle({});
-              setGhostContent(null);
-              setSketchAnimClass("");
-            },
-            hasDiff ? 3200 : 2600
-          );
+          // setTimeout(
+          //   () => {
+          //     setGhostStyle((prev) => ({
+          //       ...prev,
+          //       opacity: 0,
+          //       transition: `${prev.transition || ""}, opacity 0.4s ease`,
+          //     }));
+          //     // Let response text fade in while ghost fades out
+          //     setTimeout(() => {
+          //       setIsAnimating(false);
+          //     }, 150);
+          //     setTimeout(() => {
+          //       setAnimationPhase("idle");
+          //       setGhostStyle({});
+          //       setGhostContent(null);
+          //       setSketchAnimClass("");
+          //     }, 400);
+          //   },
+          //   hasDiff ? 3200 : 2600
+          // );
         }, 1200);
       }, 100);
     }, 500);

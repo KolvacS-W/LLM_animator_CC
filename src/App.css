@@ -250,6 +250,7 @@
   line-height: 1.7;
   color: #ececf1;
   white-space: pre-line;
+  transition: color 0.35s ease;
 }
 
 /* Hide response text during animation */
@@ -375,6 +376,13 @@
 .diff-token {
   color: #c5c6d0;
   font-weight: 500;
+}
+
+.diff-token-holder {
+  display: inline-block;
+  padding: 0;
+  border-radius: 0;
+  line-height: inherit;
 }
 
 .diff-wrapper {
@@ -519,7 +527,7 @@
 .expand-text-revealing {
   display: inline;
   color: #ececf1;
-  transition: color 1s ease-out;
+  transition: color 1.6s ease-out;
 }
 
 /* ResponseToken growing from font-size 0 */
