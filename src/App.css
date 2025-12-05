@@ -265,9 +265,9 @@
 }
 
 .token-highlighted {
-  color: #10a37f;
+  color: #c5c6d0;
   font-weight: 600;
-  background-color: rgba(16, 163, 127, 0.15);
+  background-color: rgba(142, 142, 160, 0.2);
   padding: 2px 4px;
   border-radius: 4px;
 }
