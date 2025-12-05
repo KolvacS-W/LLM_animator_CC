@@ -140,7 +140,7 @@ function App() {
             top: promptRect.top,
           }));
         }
-      } else if (animationPhase === "sketch" || animationPhase === "diff") {
+      } else if (animationPhase === "sketch") {
         // During sketch, ghost is at response position (has transform from move)
         // Update left/top to follow prompt position
         if (promptTokenRef.current) {
@@ -149,6 +149,19 @@ function App() {
             ...prev,
             left: promptRect.left,
             top: promptRect.top,
+          }));
+        }
+      } else if (animationPhase === "diff") {
+        // During diff, keep ghost aligned to the response container (like expand)
+        if (responseContainerRef.current) {
+          const containerRect =
+            responseContainerRef.current.getBoundingClientRect();
+          setGhostStyle((prev) => ({
+            ...prev,
+            left: containerRect.left,
+            top: containerRect.top,
+            width: containerRect.width,
+            maxWidth: containerRect.width,
           }));
         }
       } else if (animationPhase === "expand") {
