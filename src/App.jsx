@@ -853,12 +853,26 @@ function App() {
                 </>
               );
 
-              // Fade out the highlighted token/background
+              // Fade out the highlighted token/background + surrounding text
               setGhostContent(
                 renderFinalToken("#c5c6d0", "rgba(142, 142, 160, 0.2)")
               );
               setTimeout(() => {
-                setGhostContent(renderFinalToken("transparent", "transparent"));
+                setGhostContent(
+                  <span className="final-wrap final-wrap-fade-out">
+                    <span className="expand-text-revealing">{beforeToken}</span>
+                    <span
+                      className="final-token final-token-transition"
+                      style={{
+                        color: "transparent",
+                        backgroundColor: "transparent",
+                      }}
+                    >
+                      {responseToken}
+                    </span>
+                    <span className="expand-text-revealing">{afterToken}</span>
+                  </span>
+                );
               }, 40);
 
               // Fade in a plain response token (no background)

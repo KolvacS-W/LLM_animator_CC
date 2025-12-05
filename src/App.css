@@ -398,7 +398,12 @@
 }
 
 .final-token-transition {
-  transition: color 1s ease-out, background-color 1s ease-out;
+  transition: color 1.6s ease-out, background-color 1.6s ease-out;
+}
+
+.final-wrap-fade-out > .expand-text-revealing {
+  color: transparent;
+  transition: color 1.6s ease-out;
 }
 
 .diff-wrapper {
