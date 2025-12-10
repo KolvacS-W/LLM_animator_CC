@@ -86,6 +86,8 @@ function App() {
   const [ghostStyle, setGhostStyle] = useState({});
   const [ghostContent, setGhostContent] = useState(null); // Can be string or React element
   const [sketchAnimClass, setSketchAnimClass] = useState(""); // Controls sketch grow/shrink animation
+  const [ghostBeforeWidth, setGhostBeforeWidth] = useState(0);
+  const [ghostAfterWidth, setGhostAfterWidth] = useState(0);
 
   const GHOST_COLOR = "#c5c6d0";
   const GHOST_BG = "rgba(142, 142, 160, 0.2)";
@@ -97,6 +99,7 @@ function App() {
   const ghostRef = useRef(null);
   const responseContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const measureCanvasRef = useRef(null);
 
   // Handle image upload
   const handleImageUpload = useCallback((e) => {
@@ -176,6 +179,24 @@ function App() {
       window.removeEventListener("resize", updateGhostPosition);
     };
   }, [isAnimating, animationPhase, ghostContent]);
+
+  const getFontFromElement = useCallback((el) => {
+    if (!el) return "16px sans-serif";
+    const style = window.getComputedStyle(el);
+    return `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+  }, []);
+
+  const measureTextWidth = useCallback(
+    (text, font) => {
+      if (!measureCanvasRef.current) {
+        measureCanvasRef.current = document.createElement("canvas");
+      }
+      const ctx = measureCanvasRef.current.getContext("2d");
+      ctx.font = font || "16px sans-serif";
+      return ctx.measureText(text || "").width;
+    },
+    []
+  );
 
   // Function to wrap ONLY the first occurrence of token in text with a span for highlighting
   const wrapTokenInText = useCallback((text, token, ref, isHighlighted) => {
@@ -669,11 +690,24 @@ function App() {
         promptTokenIndex >= 0
           ? promptText.slice(promptTokenIndex + promptToken.length)
           : "";
+      const promptFont = getFontFromElement(promptContainerRef.current);
+      const promptBeforeWidth = measureTextWidth(promptBefore, promptFont);
+      const promptAfterWidth = measureTextWidth(promptAfter, promptFont);
+      setGhostBeforeWidth(promptBeforeWidth);
+      setGhostAfterWidth(promptAfterWidth);
 
       setGhostContent(
         promptTokenIndex >= 0 ? (
           <>
-            <span className="ghost-text-invisible">{promptBefore}</span>
+            <span
+              className="ghost-text-invisible ghost-width-span"
+              style={{
+                width: `${promptBeforeWidth}px`,
+                transition: "none",
+              }}
+            >
+              {promptBefore}
+            </span>
             <span
               style={{
                 backgroundColor: GHOST_BG,
@@ -684,7 +718,15 @@ function App() {
             >
               {promptToken}
             </span>
-            <span className="ghost-text-invisible">{promptAfter}</span>
+            <span
+              className="ghost-text-invisible ghost-width-span"
+              style={{
+                width: `${promptAfterWidth}px`,
+                transition: "none",
+              }}
+            >
+              {promptAfter}
+            </span>
           </>
         ) : (
           <span
@@ -728,6 +770,77 @@ function App() {
         const deltaX = currentContainerRect.left - currentPromptRect.left;
         const deltaY = currentContainerRect.top - currentPromptRect.top;
         const responseMaxWidth = currentContainerRect.width;
+        const responseTokenIndex = responseText.indexOf(responseToken);
+        const responseBefore =
+          responseTokenIndex >= 0
+            ? responseText.slice(0, responseTokenIndex)
+            : "";
+        const responseAfter =
+          responseTokenIndex >= 0
+            ? responseText.slice(responseTokenIndex + responseToken.length)
+            : "";
+        const responseFont = getFontFromElement(
+          responseContainerRef.current
+        );
+        const responseBeforeWidth = measureTextWidth(
+          responseBefore,
+          responseFont
+        );
+        const responseAfterWidth = measureTextWidth(
+          responseAfter,
+          responseFont
+        );
+
+        // Update ghost invisible spans to morph to response widths
+        setGhostBeforeWidth(responseBeforeWidth);
+        setGhostAfterWidth(responseAfterWidth);
+        setGhostContent((prev) => {
+          // Rebuild content with transitioning widths while preserving token styling
+          const promptTokenIndex = promptText.indexOf(promptToken);
+          const promptBefore =
+            promptTokenIndex >= 0
+              ? promptText.slice(0, promptTokenIndex)
+              : "";
+          const promptAfter =
+            promptTokenIndex >= 0
+              ? promptText.slice(promptTokenIndex + promptToken.length)
+              : "";
+
+          return (
+            <>
+              <span
+                className="ghost-text-invisible ghost-width-span"
+                style={{
+                  width: `${responseBeforeWidth}px`,
+                  transition:
+                    "width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              >
+                {promptBefore}
+              </span>
+              <span
+                style={{
+                  backgroundColor: GHOST_BG,
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                  color: GHOST_COLOR,
+                }}
+              >
+                {promptToken}
+              </span>
+              <span
+                className="ghost-text-invisible ghost-width-span"
+                style={{
+                  width: `${responseAfterWidth}px`,
+                  transition:
+                    "width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              >
+                {promptAfter}
+              </span>
+            </>
+          );
+        });
 
         setGhostStyle((prev) => ({
           ...prev,

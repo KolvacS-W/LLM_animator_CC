@@ -284,6 +284,11 @@
   color: transparent;
 }
 
+.ghost-width-span {
+  display: inline-block;
+  white-space: pre;
+}
+
 /* Ghost surrounding text (initially hidden, then revealed) */
 .ghost-surrounding {
   color: transparent;
