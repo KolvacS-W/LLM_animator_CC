@@ -121,8 +121,7 @@ function App() {
       if (animationPhase === "highlight") {
         // During highlight, ghost follows prompt container position
         if (promptContainerRef.current) {
-          const promptRect =
-            promptContainerRef.current.getBoundingClientRect();
+          const promptRect = promptContainerRef.current.getBoundingClientRect();
           setGhostStyle((prev) => ({
             ...prev,
             left: promptRect.left,
@@ -135,8 +134,7 @@ function App() {
         // During move, only update left/top to follow prompt position
         // DON'T update transform - it's being animated by CSS
         if (promptContainerRef.current) {
-          const promptRect =
-            promptContainerRef.current.getBoundingClientRect();
+          const promptRect = promptContainerRef.current.getBoundingClientRect();
           setGhostStyle((prev) => ({
             ...prev,
             left: promptRect.left,
@@ -186,17 +184,14 @@ function App() {
     return `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
   }, []);
 
-  const measureTextWidth = useCallback(
-    (text, font) => {
-      if (!measureCanvasRef.current) {
-        measureCanvasRef.current = document.createElement("canvas");
-      }
-      const ctx = measureCanvasRef.current.getContext("2d");
-      ctx.font = font || "16px sans-serif";
-      return ctx.measureText(text || "").width;
-    },
-    []
-  );
+  const measureTextWidth = useCallback((text, font) => {
+    if (!measureCanvasRef.current) {
+      measureCanvasRef.current = document.createElement("canvas");
+    }
+    const ctx = measureCanvasRef.current.getContext("2d");
+    ctx.font = font || "16px sans-serif";
+    return ctx.measureText(text || "").width;
+  }, []);
 
   // Function to wrap ONLY the first occurrence of token in text with a span for highlighting
   const wrapTokenInText = useCallback((text, token, ref, isHighlighted) => {
@@ -458,8 +453,7 @@ function App() {
         top: promptContainerRect?.top ?? 0,
         width: promptContainerRect?.width,
         maxWidth: promptContainerRect?.width ?? availableWidth,
-        fontSize:
-          window.getComputedStyle(promptTokenRef.current).fontSize,
+        fontSize: window.getComputedStyle(promptTokenRef.current).fontSize,
         fontWeight: "normal",
         color: GHOST_COLOR,
         opacity: 1,
@@ -683,9 +677,7 @@ function App() {
 
       const promptTokenIndex = promptText.indexOf(promptToken);
       const promptBefore =
-        promptTokenIndex >= 0
-          ? promptText.slice(0, promptTokenIndex)
-          : "";
+        promptTokenIndex >= 0 ? promptText.slice(0, promptTokenIndex) : "";
       const promptAfter =
         promptTokenIndex >= 0
           ? promptText.slice(promptTokenIndex + promptToken.length)
@@ -779,9 +771,7 @@ function App() {
           responseTokenIndex >= 0
             ? responseText.slice(responseTokenIndex + responseToken.length)
             : "";
-        const responseFont = getFontFromElement(
-          responseContainerRef.current
-        );
+        const responseFont = getFontFromElement(responseContainerRef.current);
         const responseBeforeWidth = measureTextWidth(
           responseBefore,
           responseFont
@@ -798,9 +788,7 @@ function App() {
           // Rebuild content with transitioning widths while preserving token styling
           const promptTokenIndex = promptText.indexOf(promptToken);
           const promptBefore =
-            promptTokenIndex >= 0
-              ? promptText.slice(0, promptTokenIndex)
-              : "";
+            promptTokenIndex >= 0 ? promptText.slice(0, promptTokenIndex) : "";
           const promptAfter =
             promptTokenIndex >= 0
               ? promptText.slice(promptTokenIndex + promptToken.length)
@@ -812,8 +800,7 @@ function App() {
                 className="ghost-text-invisible ghost-width-span"
                 style={{
                   width: `${responseBeforeWidth}px`,
-                  transition:
-                    "width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transition: "width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {promptBefore}
@@ -832,8 +819,7 @@ function App() {
                 className="ghost-text-invisible ghost-width-span"
                 style={{
                   width: `${responseAfterWidth}px`,
-                  transition:
-                    "width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transition: "width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {promptAfter}
@@ -865,49 +851,49 @@ function App() {
             (seg) => seg.type === "add" || seg.type === "del"
           );
 
-          // Align to container and show full text scaffold before diff
-          setGhostStyle({
-            position: "fixed",
-            left: expandContainerRect.left,
-            top: expandContainerRect.top,
-            width: expandContainerRect.width,
-            maxWidth: expandContainerRect.width,
-            fontSize: window.getComputedStyle(responseTokenRef.current)
-              .fontSize,
-            fontWeight: "normal",
-            color: GHOST_COLOR,
-            opacity: 1,
-            transform: "none",
-            transition: "none",
-            pointerEvents: "none",
-            zIndex: 1000,
-            backgroundColor: "transparent",
-            padding: "0",
-            borderRadius: "0",
-            lineHeight: "1.7",
-          });
+          // // Align to container and show full text scaffold before diff
+          // setGhostStyle({
+          //   position: "fixed",
+          //   left: expandContainerRect.left,
+          //   top: expandContainerRect.top,
+          //   width: expandContainerRect.width,
+          //   maxWidth: expandContainerRect.width,
+          //   fontSize: window.getComputedStyle(responseTokenRef.current)
+          //     .fontSize,
+          //   fontWeight: "normal",
+          //   color: GHOST_COLOR,
+          //   opacity: 1,
+          //   transform: "none",
+          //   transition: "none",
+          //   pointerEvents: "none",
+          //   zIndex: 1000,
+          //   backgroundColor: "transparent",
+          //   padding: "0",
+          //   borderRadius: "0",
+          //   lineHeight: "1.7",
+          // });
 
-          setGhostContent(
-            <span className="diff-wrapper">
-              <span className="full-text-growing">{beforeToken}</span>
-              <span className="diff-token diff-token-placeholder">
-                {responseToken}
-              </span>
-              <span className="full-text-growing">{afterToken}</span>
-            </span>
-          );
+          // setGhostContent(
+          //   <span className="diff-wrapper">
+          //     <span className="full-text-growing">{beforeToken}</span>
+          //     <span className="diff-token diff-token-placeholder">
+          //       {responseToken}
+          //     </span>
+          //     <span className="full-text-growing">{afterToken}</span>
+          //   </span>
+          // );
 
-          setTimeout(() => {
-            setGhostContent(
-              <span className="diff-wrapper">
-                <span className="full-text-grown">{beforeToken}</span>
-                <span className="diff-token diff-token-placeholder">
-                  {responseToken}
-                </span>
-                <span className="full-text-grown">{afterToken}</span>
-              </span>
-            );
-          }, 120);
+          // setTimeout(() => {
+          //   setGhostContent(
+          //     <span className="diff-wrapper">
+          //       <span className="full-text-grown">{beforeToken}</span>
+          //       <span className="diff-token diff-token-placeholder">
+          //         {responseToken}
+          //       </span>
+          //       <span className="full-text-grown">{afterToken}</span>
+          //     </span>
+          //   );
+          // }, 120);
 
           const renderDiffState = (phase) => (
             <span className="diff-wrapper">
