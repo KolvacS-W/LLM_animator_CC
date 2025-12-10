@@ -118,10 +118,16 @@ function App() {
     if (!isAnimating || !ghostContent) return;
 
     const updateGhostPosition = () => {
+      const promptRect = promptContainerRef.current
+        ? promptContainerRef.current.getBoundingClientRect()
+        : null;
+      const responseRect = responseContainerRef.current
+        ? responseContainerRef.current.getBoundingClientRect()
+        : null;
+
       if (animationPhase === "highlight") {
         // During highlight, ghost follows prompt container position
-        if (promptContainerRef.current) {
-          const promptRect = promptContainerRef.current.getBoundingClientRect();
+        if (promptRect) {
           setGhostStyle((prev) => ({
             ...prev,
             left: promptRect.left,
@@ -131,39 +137,36 @@ function App() {
           }));
         }
       } else if (animationPhase === "move") {
-        // During move, only update left/top to follow prompt position
-        // DON'T update transform - it's being animated by CSS
-        if (promptContainerRef.current) {
-          const promptRect = promptContainerRef.current.getBoundingClientRect();
+        // During move, keep ghost anchored to prompt but translate toward response
+        if (promptRect && responseRect) {
+          const deltaX = responseRect.left - promptRect.left;
+          const deltaY = responseRect.top - promptRect.top;
           setGhostStyle((prev) => ({
             ...prev,
             left: promptRect.left,
             top: promptRect.top,
+            width: promptRect.width,
+            maxWidth: promptRect.width,
+            transform: `translate(${deltaX}px, ${deltaY}px) scale(1)`,
           }));
         }
-      } else if (animationPhase === "sketch" || animationPhase === "diff") {
-        // During sketch, ghost is at response position (has transform from move)
-        // Update left/top to follow prompt position
-        if (promptTokenRef.current) {
-          const promptRect = promptTokenRef.current.getBoundingClientRect();
+      } else if (animationMode === "diff" && responseRect) {
+        // For diff mode after move completes, lock ghost to response container
+        setGhostStyle((prev) => ({
+          ...prev,
+          left: responseRect.left,
+          top: responseRect.top,
+          width: responseRect.width,
+          maxWidth: responseRect.width,
+          transform: "none",
+        }));
+      } else if (animationPhase === "sketch") {
+        // Local sketch mode keeps following prompt
+        if (promptRect) {
           setGhostStyle((prev) => ({
             ...prev,
             left: promptRect.left,
             top: promptRect.top,
-          }));
-        }
-      } else if (animationPhase === "expand") {
-        // During expand, ghost is positioned directly at container (no transform)
-        // Safe to update all position properties
-        if (responseContainerRef.current) {
-          const containerRect =
-            responseContainerRef.current.getBoundingClientRect();
-          setGhostStyle((prev) => ({
-            ...prev,
-            left: containerRect.left,
-            top: containerRect.top,
-            width: containerRect.width,
-            maxWidth: containerRect.width,
           }));
         }
       }
