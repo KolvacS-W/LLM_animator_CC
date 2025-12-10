@@ -280,6 +280,10 @@
   white-space: pre-line; /* Preserve newlines like message-text */
 }
 
+.ghost-text-invisible {
+  color: transparent;
+}
+
 /* Ghost surrounding text (initially hidden, then revealed) */
 .ghost-surrounding {
   color: transparent;

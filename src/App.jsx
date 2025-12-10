@@ -92,6 +92,7 @@ function App() {
 
   // Refs for DOM elements
   const promptTokenRef = useRef(null);
+  const promptContainerRef = useRef(null);
   const responseTokenRef = useRef(null);
   const ghostRef = useRef(null);
   const responseContainerRef = useRef(null);
@@ -115,32 +116,31 @@ function App() {
 
     const updateGhostPosition = () => {
       if (animationPhase === "highlight") {
-        // During highlight, ghost follows prompt token position
-        if (promptTokenRef.current && responseContainerRef.current) {
-          const promptRect = promptTokenRef.current.getBoundingClientRect();
-          const containerRect =
-            responseContainerRef.current.getBoundingClientRect();
-          const availableWidth = containerRect.right - promptRect.left;
-
+        // During highlight, ghost follows prompt container position
+        if (promptContainerRef.current) {
+          const promptRect =
+            promptContainerRef.current.getBoundingClientRect();
           setGhostStyle((prev) => ({
             ...prev,
             left: promptRect.left,
             top: promptRect.top,
-            maxWidth: availableWidth,
+            width: promptRect.width,
+            maxWidth: promptRect.width,
           }));
         }
       } else if (animationPhase === "move") {
         // During move, only update left/top to follow prompt position
         // DON'T update transform - it's being animated by CSS
-        if (promptTokenRef.current) {
-          const promptRect = promptTokenRef.current.getBoundingClientRect();
+        if (promptContainerRef.current) {
+          const promptRect =
+            promptContainerRef.current.getBoundingClientRect();
           setGhostStyle((prev) => ({
             ...prev,
             left: promptRect.left,
             top: promptRect.top,
           }));
         }
-      } else if (animationPhase === "sketch") {
+      } else if (animationPhase === "sketch" || animationPhase === "diff") {
         // During sketch, ghost is at response position (has transform from move)
         // Update left/top to follow prompt position
         if (promptTokenRef.current) {
@@ -149,19 +149,6 @@ function App() {
             ...prev,
             left: promptRect.left,
             top: promptRect.top,
-          }));
-        }
-      } else if (animationPhase === "diff") {
-        // During diff, keep ghost aligned to the response container (like expand)
-        if (responseContainerRef.current) {
-          const containerRect =
-            responseContainerRef.current.getBoundingClientRect();
-          setGhostStyle((prev) => ({
-            ...prev,
-            left: containerRect.left,
-            top: containerRect.top,
-            width: containerRect.width,
-            maxWidth: containerRect.width,
           }));
         }
       } else if (animationPhase === "expand") {
@@ -426,6 +413,7 @@ function App() {
     setTimeout(() => {
       if (
         !promptTokenRef.current ||
+        !promptContainerRef.current ||
         !responseTokenRef.current ||
         !responseContainerRef.current
       ) {
@@ -435,19 +423,22 @@ function App() {
       }
 
       // Get initial positions
-      const promptRect = promptTokenRef.current.getBoundingClientRect();
+      const promptContainerRect =
+        promptContainerRef.current?.getBoundingClientRect();
       const containerRect =
         responseContainerRef.current.getBoundingClientRect();
-      const availableWidth = containerRect.right - promptRect.left;
+      const availableWidth = containerRect.right - containerRect.left;
 
-      // Set initial ghost position (at prompt token)
+      // Set initial ghost position (aligned with prompt text container) and show token only
       setGhostContent(promptToken);
       setGhostStyle({
         position: "fixed",
-        left: promptRect.left,
-        top: promptRect.top,
-        maxWidth: availableWidth,
-        fontSize: window.getComputedStyle(promptTokenRef.current).fontSize,
+        left: promptContainerRect?.left ?? 0,
+        top: promptContainerRect?.top ?? 0,
+        width: promptContainerRect?.width,
+        maxWidth: promptContainerRect?.width ?? availableWidth,
+        fontSize:
+          window.getComputedStyle(promptTokenRef.current).fontSize,
         fontWeight: "normal",
         color: GHOST_COLOR,
         opacity: 1,
@@ -471,7 +462,7 @@ function App() {
       setTimeout(() => {
         // Recalculate positions
         const currentPromptRect =
-          promptTokenRef.current.getBoundingClientRect();
+          promptContainerRef.current.getBoundingClientRect();
         const currentResponseRect =
           responseTokenRef.current.getBoundingClientRect();
         const currentContainerRect =
@@ -654,6 +645,7 @@ function App() {
     setTimeout(() => {
       if (
         !promptTokenRef.current ||
+        !promptContainerRef.current ||
         !responseTokenRef.current ||
         !responseContainerRef.current
       ) {
@@ -662,17 +654,57 @@ function App() {
         return;
       }
 
-      const promptRect = promptTokenRef.current.getBoundingClientRect();
+      const promptContainerRect =
+        promptContainerRef.current.getBoundingClientRect();
       const containerRect =
         responseContainerRef.current.getBoundingClientRect();
-      const availableWidth = containerRect.right - promptRect.left;
+      const availableWidth = containerRect.right - containerRect.left;
 
-      setGhostContent(promptToken);
+      const promptTokenIndex = promptText.indexOf(promptToken);
+      const promptBefore =
+        promptTokenIndex >= 0
+          ? promptText.slice(0, promptTokenIndex)
+          : "";
+      const promptAfter =
+        promptTokenIndex >= 0
+          ? promptText.slice(promptTokenIndex + promptToken.length)
+          : "";
+
+      setGhostContent(
+        promptTokenIndex >= 0 ? (
+          <>
+            <span className="ghost-text-invisible">{promptBefore}</span>
+            <span
+              style={{
+                backgroundColor: GHOST_BG,
+                padding: "2px 4px",
+                borderRadius: "4px",
+                color: GHOST_COLOR,
+              }}
+            >
+              {promptToken}
+            </span>
+            <span className="ghost-text-invisible">{promptAfter}</span>
+          </>
+        ) : (
+          <span
+            style={{
+              backgroundColor: GHOST_BG,
+              padding: "2px 4px",
+              borderRadius: "4px",
+              color: GHOST_COLOR,
+            }}
+          >
+            {promptToken}
+          </span>
+        )
+      );
       setGhostStyle({
         position: "fixed",
-        left: promptRect.left,
-        top: promptRect.top,
-        maxWidth: availableWidth,
+        left: promptContainerRect.left,
+        top: promptContainerRect.top,
+        width: promptContainerRect.width,
+        maxWidth: promptContainerRect.width ?? availableWidth,
         fontSize: window.getComputedStyle(promptTokenRef.current).fontSize,
         fontWeight: "normal",
         color: GHOST_COLOR,
@@ -681,7 +713,7 @@ function App() {
         transition: "none",
         pointerEvents: "none",
         zIndex: 1000,
-        backgroundColor: GHOST_BG,
+        backgroundColor: "transparent",
         padding: "2px 4px",
         borderRadius: "4px",
       });
@@ -690,7 +722,7 @@ function App() {
 
       setTimeout(() => {
         const currentPromptRect =
-          promptTokenRef.current.getBoundingClientRect();
+          promptContainerRef.current.getBoundingClientRect();
         const currentContainerRect =
           responseContainerRef.current.getBoundingClientRect();
         const deltaX = currentContainerRect.left - currentPromptRect.left;
@@ -935,8 +967,10 @@ function App() {
   }, [animationMode, runDiffAnimation, runLocalAnimation]);
 
   // Determine which tokens should be highlighted based on animation phase
-  const isPromptHighlighted =
-    animationPhase === "highlight" || animationPhase === "move";
+  // const isPromptHighlighted =
+  //   animationPhase === "highlight" || animationPhase === "move";
+  //remove prompt highlight
+  const isPromptHighlighted = false;
   // const isResponseHighlighted = animationPhase === "reveal";
   const isResponseHighlighted = false;
 
@@ -1063,7 +1097,7 @@ function App() {
         <div className="message user-message">
           <div className="avatar user-avatar">U</div>
           <div className="message-content">
-            <div className="message-text">
+            <div className="message-text" ref={promptContainerRef}>
               {wrapTokenInText(
                 promptText,
                 promptToken,
