@@ -61,7 +61,10 @@ const CONFIG = {
     "Do small proofread for this text to make it more professional: I'm sorry and understand that the current policy is not optimistic for funding, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I think I will be able to fund myself for one year or two.",
   //   response: `Here's a more professionally worded version:
   // I apologize and acknowledge that the current funding landscape appears challenging, particularly in specific research domains. Regarding external fellowships, could you clarify if the school imposes any restrictions on the source or format of external funding? If no such limitations exist, I am prepared to self-fund my research for one to two years.`,
-  response: `Here's a more professionally worded version: I'm so sorry I understand that the current situation is not optimistic for fundings, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I will be able to fund myself for one year or two, thanks. Hope you like the result!`,
+  response: `Here's a more professionally worded version: 
+  
+  
+  I'm so sorry I understand that the current situation is not optimistic for fundings, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I will be able to fund myself for one year or two, thanks. Hope you like the result!`,
 
   promptToken:
     "I'm sorry and understand that the current policy is not optimistic for funding, especially in certain domains. You mentioned external fellowships, does the school have requirements on the source and form of external funding? If not I think I will be able to fund myself for one year or two.",
@@ -137,10 +140,12 @@ function App() {
           }));
         }
       } else if (animationPhase === "move") {
-        // During move, keep ghost anchored to prompt but translate toward response
-        if (promptRect && responseRect) {
-          const deltaX = responseRect.left - promptRect.left;
-          const deltaY = responseRect.top - promptRect.top;
+        // During move, keep ghost anchored to prompt but translate toward response using token positions
+        if (promptRect && responseRect && promptTokenRef.current && responseTokenRef.current) {
+          const promptTokenRect = promptTokenRef.current.getBoundingClientRect();
+          const responseTokenRect = responseTokenRef.current.getBoundingClientRect();
+          const deltaX = responseTokenRect.left - promptTokenRect.left;
+          const deltaY = responseTokenRect.top - promptTokenRect.top;
           setGhostStyle((prev) => ({
             ...prev,
             left: promptRect.left,
@@ -188,12 +193,16 @@ function App() {
   }, []);
 
   const measureTextWidth = useCallback((text, font) => {
+    const normalized = typeof text === "string" ? text : "";
+    const lines = normalized.split("\n");
+    const lastLine = lines[lines.length - 1] || "";
+
     if (!measureCanvasRef.current) {
       measureCanvasRef.current = document.createElement("canvas");
     }
     const ctx = measureCanvasRef.current.getContext("2d");
     ctx.font = font || "16px sans-serif";
-    return ctx.measureText(text || "").width;
+    return ctx.measureText(lastLine).width;
   }, []);
 
   // Function to wrap ONLY the first occurrence of token in text with a span for highlighting
@@ -760,10 +769,16 @@ function App() {
       setTimeout(() => {
         const currentPromptRect =
           promptContainerRef.current.getBoundingClientRect();
+        const currentPromptTokenRect =
+          promptTokenRef.current.getBoundingClientRect();
+        const currentResponseTokenRect =
+          responseTokenRef.current.getBoundingClientRect();
         const currentContainerRect =
           responseContainerRef.current.getBoundingClientRect();
-        const deltaX = currentContainerRect.left - currentPromptRect.left;
-        const deltaY = currentContainerRect.top - currentPromptRect.top;
+        const deltaX =
+          currentResponseTokenRect.left - currentPromptTokenRect.left;
+        const deltaY =
+          currentResponseTokenRect.top - currentPromptTokenRect.top;
         const responseMaxWidth = currentContainerRect.width;
         const responseTokenIndex = responseText.indexOf(responseToken);
         const responseBefore =
