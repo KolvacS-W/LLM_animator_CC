@@ -103,6 +103,23 @@ function App() {
   const responseContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const measureCanvasRef = useRef(null);
+  const timersRef = useRef([]);
+
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach((id) => clearTimeout(id));
+    timersRef.current = [];
+  }, []);
+
+  const schedule = useCallback(
+    (fn, delay) => {
+      const id = setTimeout(fn, delay);
+      timersRef.current.push(id);
+      return id;
+    },
+    [timersRef]
+  );
+
+  useEffect(() => clearTimers, [clearTimers]);
 
   // Handle image upload
   const handleImageUpload = useCallback((e) => {
@@ -441,11 +458,12 @@ function App() {
   const runLocalAnimation = useCallback(() => {
     if (isAnimating) return;
 
+    clearTimers();
     setIsAnimating(true);
     setAnimationPhase("highlight");
 
     // Phase 1: Highlight the prompt token
-    setTimeout(() => {
+    schedule(() => {
       if (
         !promptTokenRef.current ||
         !promptContainerRef.current ||
@@ -493,7 +511,7 @@ function App() {
       // Phase 2: Move to response position
       setAnimationPhase("move");
 
-      setTimeout(() => {
+      schedule(() => {
         // Recalculate positions
         const currentPromptRect =
           promptContainerRef.current.getBoundingClientRect();
@@ -517,7 +535,7 @@ function App() {
         }));
 
         // Phase 3: Sketch phase - at response position
-        setTimeout(() => {
+        schedule(() => {
           setAnimationPhase("sketch");
 
           // Get positions for expand phase
@@ -543,7 +561,7 @@ function App() {
           }));
 
           // Step 1: Shrink promptToken
-          setTimeout(() => {
+          schedule(() => {
             setGhostContent(
               <span className="sketch-token sketch-token-shrunk">
                 {promptToken}
@@ -552,7 +570,7 @@ function App() {
           }, 100);
 
           // Step 2: Show sketch content growing (starts at font-size 0)
-          setTimeout(() => {
+          schedule(() => {
             setSketchAnimClass("sketch-content-growing");
             showSketchContent();
             setGhostStyle((prev) => ({
@@ -562,20 +580,20 @@ function App() {
           }, 600);
 
           // Step 3: Sketch content grows to full size
-          setTimeout(() => {
+          schedule(() => {
             setSketchAnimClass("sketch-content-normal");
           }, 700); // 100ms gap to let browser render initial state
 
           // Step 4: Shrink sketch content before expand
           // Timing: 700ms (normal starts) + display duration = shrink time
           // Increase this value to show sketch longer (e.g., 2700 = 2 seconds display)
-          setTimeout(() => {
+          schedule(() => {
             setSketchAnimClass("sketch-content-shrunk");
           }, 2700); // Display for ~2 seconds before shrinking
 
           // Phase 4: Expand - sketch shrinks into responseToken
           // Timing: shrink time + 500ms (transition duration)
-          setTimeout(() => {
+          schedule(() => {
             setAnimationPhase("expand");
 
             // Show full text: beforeToken (invisible) + responseToken (growing) + afterToken (invisible)
@@ -610,7 +628,7 @@ function App() {
             });
 
             // Trigger responseToken grow animation
-            setTimeout(() => {
+            schedule(() => {
               setGhostContent(
                 <>
                   <span className="expand-text-invisible">{beforeToken}</span>
@@ -621,7 +639,7 @@ function App() {
             }, 50);
 
             // Reveal surrounding text smoothly
-            setTimeout(() => {
+            schedule(() => {
               setGhostContent(
                 <>
                   <span className="expand-text-revealing">{beforeToken}</span>
@@ -633,7 +651,7 @@ function App() {
           }, 3200); // Wait for shrink animation to complete (2700 + 500ms transition)
 
           // Clean up after animation completes with blur/fade-out
-          setTimeout(() => {
+          schedule(() => {
             setGhostStyle((prev) => {
               const extraTransition =
                 "opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease";
@@ -648,10 +666,10 @@ function App() {
               };
             });
             // Let response text fade in while ghost blurs/fades out
-            setTimeout(() => {
+            schedule(() => {
               setIsAnimating(false);
             }, 250);
-            setTimeout(() => {
+            schedule(() => {
               setAnimationPhase("idle");
               setGhostStyle({});
               setGhostContent(null);
@@ -673,10 +691,11 @@ function App() {
   const runDiffAnimation = useCallback(() => {
     if (isAnimating) return;
 
+    clearTimers();
     setIsAnimating(true);
     setAnimationPhase("highlight");
 
-    setTimeout(() => {
+    schedule(() => {
       if (
         !promptTokenRef.current ||
         !promptContainerRef.current ||
@@ -685,12 +704,12 @@ function App() {
       ) {
         setIsAnimating(false);
         setAnimationPhase("idle");
-        return;
-      }
+            return;
+          }
 
-      const promptContainerRect =
-        promptContainerRef.current.getBoundingClientRect();
-      const containerRect =
+          const promptContainerRect =
+            promptContainerRef.current.getBoundingClientRect();
+          const containerRect =
         responseContainerRef.current.getBoundingClientRect();
       const availableWidth = containerRect.right - containerRect.left;
 
@@ -773,7 +792,7 @@ function App() {
 
       setAnimationPhase("move");
 
-      setTimeout(() => {
+      schedule(() => {
         const currentPromptRect =
           promptContainerRef.current.getBoundingClientRect();
         const currentPromptTokenRect =
@@ -864,7 +883,7 @@ function App() {
         }));
         //move phase is over, now to the next phase
 
-        setTimeout(() => {
+        schedule(() => {
           const expandContainerRect =
             responseContainerRef.current.getBoundingClientRect();
           const tokenIndex = responseText.indexOf(responseToken);
@@ -962,7 +981,7 @@ function App() {
           const swapDuration = 600; // matches diff-from/diff-to transition
 
           // Phase: diff static state (context hidden) after scaffold grows
-          setTimeout(() => {
+          schedule(() => {
             setAnimationPhase("diff");
             setGhostContent(renderDiffState("static"));
             setGhostStyle((prev) => ({
@@ -974,14 +993,14 @@ function App() {
           }, diffStartDelay);
 
           // Phase: perform diff swap
-          setTimeout(() => {
+          schedule(() => {
             if (hasDiff) {
               setGhostContent(renderDiffState("swap"));
             }
           }, diffStartDelay + 120);
 
           // // Phase: reveal surrounding text smoothly only after swap is done
-          setTimeout(() => {
+          schedule(() => {
             setGhostContent(
               <>
                 <span className="expand-text-revealing">{beforeToken}</span>
@@ -991,7 +1010,7 @@ function App() {
             );
           }, diffStartDelay + swapDuration + 500);
 
-          setTimeout(
+          schedule(
             () => {
               const fadeDuration = 1600; // match expand-text-revealing timing
               const renderFinalToken = (
@@ -1015,7 +1034,7 @@ function App() {
               setGhostContent(
                 renderFinalToken("#c5c6d0", "rgba(142, 142, 160, 0.2)")
               );
-              setTimeout(() => {
+              schedule(() => {
                 setGhostContent(
                   <span className="final-wrap final-wrap-fade-out">
                     <span className="expand-text-revealing">{beforeToken}</span>
@@ -1053,10 +1072,10 @@ function App() {
               //   }, 40);
               // }, fadeDuration + 120);
 
-              setTimeout(() => {
+              schedule(() => {
                 setIsAnimating(false);
               }, 0);
-              setTimeout(() => {
+              schedule(() => {
                 setAnimationPhase("idle");
                 setGhostStyle({});
                 setGhostContent(null);

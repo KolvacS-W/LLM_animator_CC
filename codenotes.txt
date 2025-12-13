@@ -1,0 +1,3 @@
+Diff-mode was “teleporting” because old setTimeout callbacks from the previous run were still firing; when a new diff animation started, stale timers would reset animationPhase/ghostStyle to the prior run’s response container, snapping the ghost to the wrong spot after the move.
+Added a managed timer registry and cleanup so every run starts fresh: clearTimers + schedule wrapper store/clear timeouts, invoked at the start of each animation and on unmount, and all timeouts now go through this helper (src/App.jsx).
+Potential next step: run the app and try two back-to-back diff animations to confirm the ghost stays aligned.

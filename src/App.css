@@ -215,6 +215,19 @@
   background-color: #444654;
 }
 
+.response-wrapper {
+  position: relative;
+}
+
+.response-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #ececf1;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
 /* Avatar */
 .avatar {
   width: 36px;
