@@ -141,9 +141,16 @@ function App() {
         }
       } else if (animationPhase === "move") {
         // During move, keep ghost anchored to prompt but translate toward response using token positions
-        if (promptRect && responseRect && promptTokenRef.current && responseTokenRef.current) {
-          const promptTokenRect = promptTokenRef.current.getBoundingClientRect();
-          const responseTokenRect = responseTokenRef.current.getBoundingClientRect();
+        if (
+          promptRect &&
+          responseRect &&
+          promptTokenRef.current &&
+          responseTokenRef.current
+        ) {
+          const promptTokenRect =
+            promptTokenRef.current.getBoundingClientRect();
+          const responseTokenRect =
+            responseTokenRef.current.getBoundingClientRect();
           const deltaX = responseTokenRect.left - promptTokenRect.left;
           const deltaY = responseTokenRect.top - promptTokenRect.top;
           setGhostStyle((prev) => ({
@@ -855,6 +862,7 @@ function App() {
           transition:
             "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s ease-in-out, color 1.2s ease-in-out, max-width 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
         }));
+        //move phase is over, now to the next phase
 
         setTimeout(() => {
           const expandContainerRect =
@@ -869,49 +877,37 @@ function App() {
             (seg) => seg.type === "add" || seg.type === "del"
           );
 
-          // // Align to container and show full text scaffold before diff
-          // setGhostStyle({
-          //   position: "fixed",
-          //   left: expandContainerRect.left,
-          //   top: expandContainerRect.top,
-          //   width: expandContainerRect.width,
-          //   maxWidth: expandContainerRect.width,
-          //   fontSize: window.getComputedStyle(responseTokenRef.current)
-          //     .fontSize,
-          //   fontWeight: "normal",
-          //   color: GHOST_COLOR,
-          //   opacity: 1,
-          //   transform: "none",
-          //   transition: "none",
-          //   pointerEvents: "none",
-          //   zIndex: 1000,
-          //   backgroundColor: "transparent",
-          //   padding: "0",
-          //   borderRadius: "0",
-          //   lineHeight: "1.7",
-          // });
+          // Align to container and show full text scaffold before diff
+          setGhostStyle({
+            position: "fixed",
+            left: expandContainerRect.left,
+            top: expandContainerRect.top,
+            width: expandContainerRect.width,
+            maxWidth: expandContainerRect.width,
+            fontSize: window.getComputedStyle(responseTokenRef.current)
+              .fontSize,
+            fontWeight: "normal",
+            color: GHOST_COLOR,
+            opacity: 1,
+            transform: "none",
+            transition: "none",
+            pointerEvents: "none",
+            zIndex: 1000,
+            backgroundColor: "transparent",
+            padding: "0",
+            borderRadius: "0",
+            lineHeight: "1.7",
+          });
 
-          // setGhostContent(
-          //   <span className="diff-wrapper">
-          //     <span className="full-text-growing">{beforeToken}</span>
-          //     <span className="diff-token diff-token-placeholder">
-          //       {responseToken}
-          //     </span>
-          //     <span className="full-text-growing">{afterToken}</span>
-          //   </span>
-          // );
-
-          // setTimeout(() => {
-          //   setGhostContent(
-          //     <span className="diff-wrapper">
-          //       <span className="full-text-grown">{beforeToken}</span>
-          //       <span className="diff-token diff-token-placeholder">
-          //         {responseToken}
-          //       </span>
-          //       <span className="full-text-grown">{afterToken}</span>
-          //     </span>
-          //   );
-          // }, 120);
+          setGhostContent(
+            <span className="diff-wrapper">
+              <span className="full-text-growing">{beforeToken}</span>
+              <span className="diff-token diff-token-placeholder">
+                {promptToken}
+              </span>
+              <span className="full-text-growing">{afterToken}</span>
+            </span>
+          );
 
           const renderDiffState = (phase) => (
             <span className="diff-wrapper">
